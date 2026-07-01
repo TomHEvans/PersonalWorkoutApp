@@ -1,0 +1,28 @@
+{
+  "name": "personal-workout-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Private mobile-first hybrid training tracker on Cloudflare Pages + KV",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -b",
+    "build": "tsc -b && vite build && node scripts/inject-sw-manifest.mjs",
+    "preview": "vite preview",
+    "icons": "node scripts/gen-icons.mjs",
+    "pages:dev": "npm run build && wrangler pages dev dist --kv TRACKER_KV --compatibility-date=2025-06-01",
+    "deploy": "npm run build && wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260701.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}

@@ -1,0 +1,125 @@
+/* Service worker (section 9).
+ * - App shell: cache-first with a background refresh, so the app opens offline
+ *   and updates when back online.
+ * - Static assets (hashed JS/CSS/icons): cache-first.
+ * - API: network-only. Offline log data comes from localStorage in the app,
+ *   so the SW never caches API responses (which would risk serving a stale
+ *   log over fresher local edits).
+ */
+const VERSION = 'v1'
+const SHELL_CACHE = `shell-${VERSION}`
+const ASSET_CACHE = `assets-${VERSION}`
+
+// Hashed build assets (JS/CSS) are injected here at build time by
+// scripts/inject-sw-manifest.mjs so the app is guaranteed to work offline
+// after a single online visit. Empty in dev.
+const PRECACHE_ASSETS = [/* INJECT_MANIFEST */]
+
+const SHELL_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+]
+
+const offline = (body) =>
+  new Response(JSON.stringify(body ?? { error: 'offline' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    (async () => {
+      const shell = await caches.open(SHELL_CACHE)
+      await shell.addAll(SHELL_ASSETS)
+      if (PRECACHE_ASSETS.length) {
+        const assets = await caches.open(ASSET_CACHE)
+        // Individual puts so one bad URL can't fail the whole install.
+        await Promise.all(
+          PRECACHE_ASSETS.map((u) =>
+            fetch(u).then((r) => (r && r.ok ? assets.put(u, r.clone()) : null)).catch(() => null),
+          ),
+        )
+      }
+      await self.skipWaiting()
+    })(),
+  )
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys()
+      await Promise.all(
+        keys.filter((k) => k !== SHELL_CACHE && k !== ASSET_CACHE).map((k) => caches.delete(k)),
+      )
+      await self.clients.claim()
+    })(),
+  )
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  if (request.method !== 'GET') return // never touch PUT/DELETE writes
+
+  const url = new URL(request.url)
+  if (url.origin !== self.location.origin) return
+
+  // API: network-only, benign error when offline.
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request).catch(() => offline()))
+    return
+  }
+
+  // Navigations: serve the cached app shell, refresh it in the background.
+  if (request.mode === 'navigate') {
+    event.respondWith(appShell())
+    return
+  }
+
+  // Everything else same-origin (hashed JS/CSS/icons): cache-first.
+  event.respondWith(cacheFirst(request))
+})
+
+async function appShell() {
+  const cache = await caches.open(SHELL_CACHE)
+  const cached = await cache.match('/index.html')
+  // Refresh the cached shell in the background when online.
+  fetch('/index.html')
+    .then((res) => {
+      if (res && res.ok) cache.put('/index.html', res.clone())
+    })
+    .catch(() => {})
+  if (cached) {
+    // Reconstruct a fresh Response from the cached body. Returning a
+    // cache-origin Response object directly to a main-frame navigation can
+    // fail with ERR_FAILED in some engines; a freshly built Response is safe.
+    const body = await cached.arrayBuffer()
+    return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+  }
+  // Not cached yet (first visit): go to the network by URL string, never the
+  // original navigate-mode Request object.
+  try {
+    const net = await fetch('/index.html')
+    if (net && net.ok) return net
+  } catch {
+    /* offline with no cache */
+  }
+  return offline({ error: 'offline shell' })
+}
+
+async function cacheFirst(request) {
+  const cache = await caches.open(ASSET_CACHE)
+  const cached = await cache.match(request)
+  if (cached) return cached
+  try {
+    const res = await fetch(request)
+    if (res && res.ok) cache.put(request, res.clone())
+    return res
+  } catch {
+    return offline()
+  }
+}

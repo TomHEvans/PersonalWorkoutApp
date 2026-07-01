@@ -1,0 +1,3 @@
+# Copy to .dev.vars (gitignored) for local `wrangler pages dev`.
+# This is the passcode the app sends as X-App-Token and the Function checks.
+APP_TOKEN=dev-passcode-change-me

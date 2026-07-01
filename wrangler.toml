@@ -1,0 +1,19 @@
+name = "personal-workout-app"
+compatibility_date = "2025-06-01"
+pages_build_output_dir = "dist"
+
+# Cloudflare account that owns the Pages project + KV namespace.
+account_id = "c2471ec95d123632dd965dbfd8f79637"
+
+# KV namespace holding the logs (key: log:<weekId>).
+# Create the namespaces, then paste the returned ids below:
+#   npx wrangler kv namespace create TRACKER_KV
+#   npx wrangler kv namespace create TRACKER_KV --preview
+[[kv_namespaces]]
+binding = "TRACKER_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
+
+# APP_TOKEN is a secret, NOT stored here. Set it with:
+#   npx wrangler pages secret put APP_TOKEN
+# For local `wrangler pages dev`, put it in .dev.vars (gitignored) instead.
