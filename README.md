@@ -128,6 +128,29 @@ the one-time setup (KV ids in `wrangler.toml`, `APP_TOKEN` secret) first.
 > check the current [Cloudflare Pages](https://developers.cloudflare.com/pages/)
 > and [KV](https://developers.cloudflare.com/kv/) docs and adapt.
 
+### Deploy with no terminal (Cloudflare dashboard + Git)
+
+Cloudflare builds and deploys on its own servers straight from GitHub — no local
+tooling needed:
+
+1. **Create the KV namespace.** Dashboard → **Storage & Databases → KV → Create
+   a namespace**, name it `TRACKER_KV`, and copy its **Namespace ID**. Paste
+   that id into `wrangler.toml` (both `id` and `preview_id`) — edit the file in
+   GitHub's web editor and commit. (When a `wrangler.toml` is present, Pages
+   reads bindings from it, so the id must live there.)
+2. **Create the Pages project.** Dashboard → **Workers & Pages → Create →
+   Pages → Connect to Git** → pick the repo and set the production branch to the
+   one you deploy from. Framework preset **Vite** (build command `npm run build`,
+   output directory `dist`). **Save and Deploy.**
+3. The passcode is set via `[vars] APP_TOKEN` in `wrangler.toml`. To harden it
+   into a real secret later, add an encrypted **Secret** named `APP_TOKEN` in
+   the project's **Settings → Variables and Secrets** and remove the `[vars]`
+   line.
+4. Open the deployment URL, enter the passcode.
+
+Every later push to the production branch redeploys automatically — so "add a
+week" becomes: edit `src/plans/`, commit, done.
+
 ### Definition of done
 
 - Open the live URL on a phone, enter the passcode once, see Week 6 with

@@ -6,14 +6,19 @@ pages_build_output_dir = "dist"
 account_id = "c2471ec95d123632dd965dbfd8f79637"
 
 # KV namespace holding the logs (key: log:<weekId>).
-# Create the namespaces, then paste the returned ids below:
-#   npx wrangler kv namespace create TRACKER_KV
-#   npx wrangler kv namespace create TRACKER_KV --preview
+# Create it in the Cloudflare dashboard (Workers & Pages -> KV -> Create), or
+# via CLI (npx wrangler kv namespace create TRACKER_KV), then paste the id here.
+# NOTE: when a wrangler.toml is present, Cloudflare Pages reads bindings from
+# THIS file (dashboard-configured bindings are ignored), so the real namespace
+# id must live here.
 [[kv_namespaces]]
 binding = "TRACKER_KV"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
-# APP_TOKEN is a secret, NOT stored here. Set it with:
-#   npx wrangler pages secret put APP_TOKEN
-# For local `wrangler pages dev`, put it in .dev.vars (gitignored) instead.
+# The passcode the API checks against the X-App-Token header. Best practice is a
+# secret (`npx wrangler pages secret put APP_TOKEN`, or a dashboard Secret), but
+# it is set here as a plain var so a dashboard-only, no-terminal deploy works
+# with zero extra steps. Change it any time (edit this line -> auto-redeploys).
+[vars]
+APP_TOKEN = "ns4AHBtIvwjPF0yY"
