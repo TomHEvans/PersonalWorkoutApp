@@ -14,8 +14,8 @@ Two kinds of data, kept separate on purpose:
   and bundled with the site. It is served with the app, so it is always current
   on every device. Changing the plan is a code edit + redeploy.
 - **The log** — what you actually did (ticked sets, weights, reps, notes). Lives
-  in **Cloudflare KV**, written through a small Cloudflare Pages Functions API,
-  so it follows you between devices. You fill it in yourself by tapping.
+  in **Cloudflare KV**, written through a small JSON API, so it follows you
+  between devices. You fill it in yourself by tapping.
 
 The plan evolves freely in code without touching stored data; the log stays
 synced and durable without being locked to a rigid schema. New weeks arrive as
@@ -26,130 +26,68 @@ repo edits, never as an in-app import.
 - **Vite + React + TypeScript** front end (single screen, no router).
 - One hand-written CSS file ([`src/styles.css`](src/styles.css)) using CSS
   custom properties for the palette. No Tailwind, no component library.
-- **Cloudflare Pages** for hosting.
-- **Cloudflare Pages Functions** ([`functions/`](functions)) for the log API.
+- **Cloudflare Workers** for hosting: the built app in `dist/` is served as
+  static assets, and a small Worker ([`worker/index.ts`](worker/index.ts))
+  serves the log API and the SPA fallback.
 - **Cloudflare KV** for storage — one namespace, one key per week
   (`log:<weekId>`).
 - A hand-written **service worker** + web manifest for PWA / offline.
+
+> The API logic lives in [`server/logApi.ts`](server/logApi.ts) and is shared by
+> the Worker and a Cloudflare **Pages Function** adapter
+> ([`functions/api/log/[weekId].ts`](functions/api/log/%5BweekId%5D.ts)), so the
+> app can also be deployed as a Pages project unchanged if you prefer.
 
 ---
 
 ## Prerequisites
 
-- Node 20+ and npm.
+- Node 20+ and npm (Node 22 is pinned for the Cloudflare build via
+  [`.node-version`](.node-version)).
 - A Cloudflare account (free tier is fine).
-- Wrangler is used via `npx` (no global install needed).
+- A KV namespace bound as `TRACKER_KV` (see below).
 
-## One-time Cloudflare setup
+## Deploy — the easy way (browser only, via Git)
 
-1. **Log in to Wrangler** (opens a browser):
+Cloudflare builds and deploys on its own servers straight from GitHub — no local
+tooling needed.
 
-   ```sh
-   npx wrangler login
-   ```
+1. **Create the KV namespace.** Dashboard → **Storage & Databases → KV → Create
+   a namespace**, name it `TRACKER_KV`, copy its **Namespace ID**, and put it in
+   [`wrangler.toml`](wrangler.toml) (`id` and `preview_id`). When a
+   `wrangler.toml` is present, Cloudflare reads bindings from it, so the id must
+   live there. (This repo already has one wired in — replace it with yours.)
+2. **Create the project from Git.** Dashboard → **Workers & Pages → Create →
+   Connect to Git** → pick the repo → set the production branch. Cloudflare
+   detects the config; the build command is `npm run build` and the deploy
+   command is `npx wrangler deploy`.
+3. **Deploy.** Every push to the production branch rebuilds and redeploys. You
+   get a `…workers.dev` URL (or attach a custom domain).
 
-   Or, for CI / headless, set `CLOUDFLARE_API_TOKEN` (a token with
-   *Pages: Edit* and *Workers KV Storage: Edit* permissions) and
-   `CLOUDFLARE_ACCOUNT_ID`.
+The passcode is set via `[vars] APP_TOKEN` in `wrangler.toml`. To harden it into
+a real secret, add an encrypted **Secret** named `APP_TOKEN` under the project's
+**Settings → Variables and Secrets** (or `npx wrangler secret put APP_TOKEN`) and
+remove the `[vars]` line.
 
-2. **Create the KV namespaces** (production + preview) and paste the returned
-   ids into [`wrangler.toml`](wrangler.toml):
-
-   ```sh
-   npx wrangler kv namespace create TRACKER_KV
-   npx wrangler kv namespace create TRACKER_KV --preview
-   ```
-
-   ```toml
-   [[kv_namespaces]]
-   binding = "TRACKER_KV"
-   id = "<paste production id>"
-   preview_id = "<paste preview id>"
-   ```
-
-   The account id is already set in `wrangler.toml`.
-
-3. **Set the app passcode secret.** Every API request must send this value in
-   the `X-App-Token` header; the front end asks for it once and stores it in
-   `localStorage`.
-
-   ```sh
-   npx wrangler pages secret put APP_TOKEN
-   ```
-
-   (Cloudflare will create the Pages project on first deploy if it does not
-   exist yet; if `pages secret put` complains that the project is missing, run
-   the deploy in the next section once, then set the secret.)
-
-## Local development
-
-Install dependencies:
+## Deploy — from a terminal
 
 ```sh
 npm install
+npx wrangler login
+# create the KV namespace and paste its id into wrangler.toml:
+npx wrangler kv namespace create TRACKER_KV
+npm run deploy            # runs: npm run build && wrangler deploy
 ```
 
-Create a local secrets file for the passcode (git-ignored):
+Optionally make the passcode a real secret instead of a `[vars]` value:
 
 ```sh
-cp .dev.vars.example .dev.vars
-# edit .dev.vars and set APP_TOKEN=<your local passcode>
+npx wrangler secret put APP_TOKEN
 ```
-
-Run the **full stack** (built front end + Functions + a local KV emulator):
-
-```sh
-npm run pages:dev
-```
-
-This builds to `dist/` and starts Wrangler Pages dev on
-<http://localhost:8788> with a local KV namespace bound as `TRACKER_KV`. The log
-persists locally between runs (in `.wrangler/`). Open the URL, enter the
-passcode from `.dev.vars`, and you can exercise load, log, autosave,
-reload-persists, reset, and export end to end.
-
-For fast UI-only work (Vite HMR, **no** Functions/KV — API calls will 404):
-
-```sh
-npm run dev
-```
-
-## Deploy
-
-```sh
-npm run deploy
-```
-
-This builds and runs `wrangler pages deploy dist`. Wrangler prints the live URL
-(e.g. `https://personal-workout-app.pages.dev`). Make sure you have completed
-the one-time setup (KV ids in `wrangler.toml`, `APP_TOKEN` secret) first.
 
 > Wrangler's exact flags change between versions — if a command is rejected,
-> check the current [Cloudflare Pages](https://developers.cloudflare.com/pages/)
-> and [KV](https://developers.cloudflare.com/kv/) docs and adapt.
-
-### Deploy with no terminal (Cloudflare dashboard + Git)
-
-Cloudflare builds and deploys on its own servers straight from GitHub — no local
-tooling needed:
-
-1. **Create the KV namespace.** Dashboard → **Storage & Databases → KV → Create
-   a namespace**, name it `TRACKER_KV`, and copy its **Namespace ID**. Paste
-   that id into `wrangler.toml` (both `id` and `preview_id`) — edit the file in
-   GitHub's web editor and commit. (When a `wrangler.toml` is present, Pages
-   reads bindings from it, so the id must live there.)
-2. **Create the Pages project.** Dashboard → **Workers & Pages → Create →
-   Pages → Connect to Git** → pick the repo and set the production branch to the
-   one you deploy from. Framework preset **Vite** (build command `npm run build`,
-   output directory `dist`). **Save and Deploy.**
-3. The passcode is set via `[vars] APP_TOKEN` in `wrangler.toml`. To harden it
-   into a real secret later, add an encrypted **Secret** named `APP_TOKEN` in
-   the project's **Settings → Variables and Secrets** and remove the `[vars]`
-   line.
-4. Open the deployment URL, enter the passcode.
-
-Every later push to the production branch redeploys automatically — so "add a
-week" becomes: edit `src/plans/`, commit, done.
+> check the current [Workers](https://developers.cloudflare.com/workers/) and
+> [KV](https://developers.cloudflare.com/kv/) docs and adapt.
 
 ### Definition of done
 
@@ -161,20 +99,46 @@ week" becomes: edit `src/plans/`, commit, done.
 - Adding a week is a repo edit + redeploy, no import step.
 - Installable to the home screen; opens offline showing last-synced data.
 
+## Local development
+
+Install dependencies and create a local secrets file for the passcode
+(git-ignored):
+
+```sh
+npm install
+cp .dev.vars.example .dev.vars     # set APP_TOKEN=<your local passcode>
+```
+
+Run the **full stack** (built app + Worker API + a local KV emulator):
+
+```sh
+npm run preview:worker             # builds, then runs `wrangler dev`
+```
+
+Opens on <http://localhost:8787> with a local `TRACKER_KV`. `.dev.vars` sets the
+local `APP_TOKEN` (overrides the `[vars]` value in dev). Exercise load, log,
+autosave, reload-persists, reset, and export end to end.
+
+For fast UI-only work (Vite HMR, **no** API/KV — API calls will 404):
+
+```sh
+npm run dev
+```
+
 ---
 
 ## Adding / editing a week
 
-This is the weekly workflow. Each week:
+This is the weekly workflow:
 
 1. **Create a plan module** under `src/plans/`, e.g. `src/plans/2026-W07.ts`,
    default-exporting a `Week` object. Copy an existing week as a starting point.
 2. **Register it** in [`src/plans/index.ts`](src/plans/index.ts): import it and
-   add it to the `WEEKS` array. Weeks are sorted ascending by `id`, so use a
-   sortable id like `2026-W07`.
+   add it to the `WEEKS` array. Weeks sort ascending by `id`, so use a sortable
+   id like `2026-W07`.
 3. If the week needs a new capability, make the small renderer change it calls
    for (see "Extending" below). Keep all previous weeks intact.
-4. Redeploy (`npm run deploy`).
+4. Commit + push (auto-redeploys), or `npm run deploy`.
 
 The app shows the **current** week automatically: the week that contains a day
 flagged `today: true`, otherwise the highest `id`. A compact week switcher in
@@ -271,22 +235,23 @@ for unchanged sessions are preserved.
   (debounced because KV allows ~1 write/sec per key).
 - If a save fails (offline), it is kept locally and retried on the next change
   or when the connection returns.
-- The service worker serves the app shell offline (cache-first) and is
-  network-only for the API; offline log data comes from `localStorage`.
+- The service worker serves the app shell offline (cache-first, with a
+  build-time precache manifest) and is network-only for the API; offline log
+  data comes from `localStorage`.
 
 ## The log API
 
-Cloudflare Pages Functions under `functions/api/`
-([`functions/api/log/[weekId].ts`](functions/api/log/%5BweekId%5D.ts)):
+Served by the Worker at `/api/log/:weekId` (logic in
+[`server/logApi.ts`](server/logApi.ts)):
 
-| Method   | Path              | Body            | Response          |
-| -------- | ----------------- | --------------- | ----------------- |
+| Method   | Path               | Body            | Response               |
+| -------- | ------------------ | --------------- | ---------------------- |
 | `GET`    | `/api/log/:weekId` | –               | `{ "log": {…}\|null }` |
-| `PUT`    | `/api/log/:weekId` | `{ "log": {…} }` | `{ "ok": true }`  |
-| `DELETE` | `/api/log/:weekId` | –               | `{ "ok": true }`  |
+| `PUT`    | `/api/log/:weekId` | `{ "log": {…} }` | `{ "ok": true }`       |
+| `DELETE` | `/api/log/:weekId` | –               | `{ "ok": true }`       |
 
-Every request requires header `X-App-Token` equal to the `APP_TOKEN` secret;
-mismatches return `401`. KV layout: key `log:<weekId>` holds the log JSON.
+Every request requires header `X-App-Token` equal to `APP_TOKEN`; mismatches
+return `401`. KV layout: key `log:<weekId>` holds the log JSON.
 
 **Log shape**, keyed by session `id`:
 
@@ -301,40 +266,41 @@ type WeekLog = Record<string, SessionLog>;
 ## Passcode
 
 The passcode gate keeps casual visitors out. The app asks for it once, stores it
-in `localStorage`, and sends it on every request. Use **Clear passcode** in the
-header to remove it (e.g. if you entered the wrong one). A wrong passcode returns
-`401` and re-prompts.
+in `localStorage`, and sends it on every request as `X-App-Token`. Use **Clear
+passcode** in the header to remove it. A wrong passcode returns `401` and
+re-prompts.
 
 ## Optional: Cloudflare Access (stronger, and free for one user)
 
 The passcode is a light gate. For real protection, put **Cloudflare Access
-(Zero Trust)** in front of the Pages project so only your email can open it:
+(Zero Trust)** in front of the site so only your email can open it:
 
-1. In the Cloudflare dashboard: **Zero Trust → Access → Applications → Add an
-   application → Self-hosted**.
-2. Set the application domain to your Pages URL (e.g.
-   `personal-workout-app.pages.dev`).
+1. Dashboard → **Zero Trust → Access → Applications → Add an application →
+   Self-hosted**.
+2. Set the application domain to your deployment URL.
 3. Add a policy: **Action: Allow**, **Include: Emails → your email address**.
 4. Save. Cloudflare now requires an email one-time-PIN / SSO login before the app
-   loads. This is free for up to 50 users.
+   loads. Free for up to 50 users.
 
-This does not replace the passcode (the API still checks `X-App-Token`), it adds
+This does not replace the passcode (the API still checks `X-App-Token`); it adds
 an identity gate in front of the whole site.
 
 ## Project structure
 
 ```
-functions/api/log/[weekId].ts  Pages Function: GET/PUT/DELETE the log in KV
-src/plans/                      one module per week + index (the plan)
-src/kinds/registry.tsx          session-kind registry (render + logic)
-src/lib/                        api, storage, reconcile, progress, theme
-src/hooks/useWeekLog.ts         load, reconcile, debounced autosave, offline
-src/components/                 header, day card, session block, gate, …
-public/sw.js                    service worker (built with an injected manifest)
-public/manifest.webmanifest     PWA manifest
-scripts/gen-icons.mjs           regenerate placeholder icons (npm run icons)
-scripts/inject-sw-manifest.mjs  post-build: precache manifest + cache version
-wrangler.toml                   Pages + KV config
+worker/index.ts                Worker entry: serves /api + static assets + SPA
+server/logApi.ts               shared log API logic (KV + token check)
+functions/api/log/[weekId].ts  Pages Function adapter (optional Pages deploys)
+src/plans/                     one module per week + index (the plan)
+src/kinds/registry.tsx         session-kind registry (render + logic)
+src/lib/                       api, storage, reconcile, progress, theme
+src/hooks/useWeekLog.ts        load, reconcile, debounced autosave, offline
+src/components/                header, day card, session block, gate, …
+public/sw.js                   service worker (built with an injected manifest)
+public/manifest.webmanifest    PWA manifest
+scripts/gen-icons.mjs          regenerate placeholder icons (npm run icons)
+scripts/inject-sw-manifest.mjs post-build: precache manifest + cache version
+wrangler.toml                  Worker + assets + KV + vars config
 ```
 
 ## Icons
