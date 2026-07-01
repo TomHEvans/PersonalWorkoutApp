@@ -1,24 +1,25 @@
 name = "personal-workout-app"
+main = "worker/index.ts"
 compatibility_date = "2025-06-01"
-pages_build_output_dir = "dist"
 
-# Cloudflare account that owns the Pages project + KV namespace.
+# Cloudflare account that owns the Worker + KV namespace.
 account_id = "c2471ec95d123632dd965dbfd8f79637"
 
+# Serve the built Vite app (./dist) as static assets. The Worker in
+# worker/index.ts handles /api/* and falls back to index.html for other paths.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
 # KV namespace holding the logs (key: log:<weekId>).
-# Create it in the Cloudflare dashboard (Workers & Pages -> KV -> Create), or
-# via CLI (npx wrangler kv namespace create TRACKER_KV), then paste the id here.
-# NOTE: when a wrangler.toml is present, Cloudflare Pages reads bindings from
-# THIS file (dashboard-configured bindings are ignored), so the real namespace
-# id must live here.
 [[kv_namespaces]]
 binding = "TRACKER_KV"
 id = "7571d3d38c95413c9e24bf638c534b44"
 preview_id = "7571d3d38c95413c9e24bf638c534b44"
 
 # The passcode the API checks against the X-App-Token header. Best practice is a
-# secret (`npx wrangler pages secret put APP_TOKEN`, or a dashboard Secret), but
-# it is set here as a plain var so a dashboard-only, no-terminal deploy works
-# with zero extra steps. Change it any time (edit this line -> auto-redeploys).
+# secret (`npx wrangler secret put APP_TOKEN`, or a dashboard Secret), but it is
+# set here as a plain var so a dashboard-only, no-terminal deploy works with zero
+# extra steps. Change it any time (edit this line -> push -> auto-redeploys).
 [vars]
 APP_TOKEN = "ns4AHBtIvwjPF0yY"

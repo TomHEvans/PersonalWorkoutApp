@@ -16,5 +16,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["functions"]
+  "include": ["functions", "worker", "server"]
 }
