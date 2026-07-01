@@ -13,8 +13,8 @@ account_id = "c2471ec95d123632dd965dbfd8f79637"
 # id must live here.
 [[kv_namespaces]]
 binding = "TRACKER_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "7571d3d38c95413c9e24bf638c534b44"
+preview_id = "7571d3d38c95413c9e24bf638c534b44"
 
 # The passcode the API checks against the X-App-Token header. Best practice is a
 # secret (`npx wrangler pages secret put APP_TOKEN`, or a dashboard Secret), but
