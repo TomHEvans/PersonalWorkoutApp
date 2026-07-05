@@ -6,6 +6,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    /* Plan modules under src/plans/ are plain JS by design. */
+    "allowJs": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",

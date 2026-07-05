@@ -1,12 +1,21 @@
 import type { WeekLog } from '../types'
+import { normalize } from './log'
 
-// The passcode is stored once in localStorage and sent on every request as
-// the X-App-Token header (section 7).
-const TOKEN_KEY = 'wt:token'
+// The shared token is entered once in the app and sent on every request as
+// the X-App-Token header, checked against the APP_TOKEN Worker var.
+const TOKEN_KEY = 'athx-token-v1'
+const LEGACY_TOKEN_KEY = 'wt:token' // pre-rewrite key; migrated on first read
 
 export function getToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token) return token
+    const legacy = localStorage.getItem(LEGACY_TOKEN_KEY)
+    if (legacy) {
+      localStorage.setItem(TOKEN_KEY, legacy)
+      localStorage.removeItem(LEGACY_TOKEN_KEY)
+    }
+    return legacy
   } catch {
     return null
   }
@@ -16,7 +25,7 @@ export function setToken(token: string): void {
   try {
     localStorage.setItem(TOKEN_KEY, token)
   } catch {
-    /* ignore private-mode failures */
+    /* ignore */
   }
 }
 
@@ -53,13 +62,9 @@ async function request(method: string, weekId: string, body?: unknown): Promise<
 
 export async function getLog(weekId: string): Promise<WeekLog | null> {
   const data = await request('GET', weekId)
-  return (data.log as WeekLog | null) ?? null
+  return data.log ? normalize(data.log) : null
 }
 
 export async function putLog(weekId: string, log: WeekLog): Promise<void> {
   await request('PUT', weekId, { log })
-}
-
-export async function deleteLog(weekId: string): Promise<void> {
-  await request('DELETE', weekId)
 }

@@ -1,15 +1,17 @@
 import type { WeekLog } from '../types'
+import { normalize } from './log'
 
-// localStorage mirror of each week's log, for instant load and offline
-// viewing (section 3). A per-week "dirty" flag marks a log that has local
-// edits not yet confirmed by the server.
-const logKey = (weekId: string) => `wt:log:${weekId}`
-const dirtyKey = (weekId: string) => `wt:dirty:${weekId}`
+// localStorage is the local-first copy: every change lands here immediately,
+// the KV PUT follows debounced. Any structural change to the log shape bumps
+// this version (v1 -> v2) so stale state never merges into new code.
+const VERSION = 'athx-log-v1'
+const logKey = (weekId: string) => `${VERSION}:${weekId}`
+const dirtyKey = (weekId: string) => `${VERSION}:dirty:${weekId}`
 
 export function readLocal(weekId: string): WeekLog | null {
   try {
     const raw = localStorage.getItem(logKey(weekId))
-    return raw ? (JSON.parse(raw) as WeekLog) : null
+    return raw ? normalize(JSON.parse(raw)) : null
   } catch {
     return null
   }
@@ -19,10 +21,11 @@ export function writeLocal(weekId: string, log: WeekLog): void {
   try {
     localStorage.setItem(logKey(weekId), JSON.stringify(log))
   } catch {
-    /* ignore */
+    /* ignore private-mode failures */
   }
 }
 
+// Marks a log with local edits not yet confirmed written to KV.
 export function isDirty(weekId: string): boolean {
   try {
     return localStorage.getItem(dirtyKey(weekId)) === '1'

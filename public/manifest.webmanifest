@@ -1,7 +1,7 @@
 {
-  "name": "Training Tracker",
-  "short_name": "Training",
-  "description": "Private hybrid training tracker",
+  "name": "ATHX Training Tracker",
+  "short_name": "ATHX",
+  "description": "Single-user ATHX training tracker",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
