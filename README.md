@@ -138,10 +138,13 @@ var; mismatches return `401`. KV layout: key `log:<weekId>` holds:
 
 ## Auth
 
-A single shared token, set as the `APP_TOKEN` var in
-[`wrangler.toml`](wrangler.toml) (or a Wrangler/dashboard Secret) and entered
+A single shared token, stored as an encrypted Worker **Secret** named
+`APP_TOKEN` (dashboard: **Workers & Pages → personal-workout-app → Settings →
+Variables and Secrets**, or `npx wrangler secret put APP_TOKEN`) and entered
 once in the app; it is stored in `localStorage` and sent as `X-App-Token` on
 every request. Good enough for one user; no accounts. The ⚙ button clears it.
+This repo is public, so the token must never appear in `wrangler.toml` — if the
+secret is missing, every API request returns 401 until it is set.
 
 ## Tech stack
 
