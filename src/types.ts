@@ -1,83 +1,69 @@
 // ---------------------------------------------------------------------------
-// The PLAN (bundled from the repo — see section 4 of the brief).
-//
-// This shape is a *reference, not a hard contract*. Future weeks may add
-// fields or new session kinds. The renderer ignores unknown fields rather
-// than crashing, and new kinds are added through the registry in
-// src/kinds/registry.tsx. The index signature on Session lets a future week
-// attach extra fields to a session literal without a type error.
+// The PLAN — one plain-JS module per week under src/plans/ (see design doc).
+// Plans are code: they ship with the app bundle and never touch stored data.
+// These types describe the shape those JS modules must follow; the registry
+// casts the imported modules to WeekPlan at the boundary.
 // ---------------------------------------------------------------------------
 
-export type SessionType =
-  | 'strength'
-  | 'oly'
-  | 'runQuality'
-  | 'runEasy'
-  | 'runLong'
-  | 'physio'
-  | 'skill'
-  | 'cond'
-  | 'rest'
+export type Priority = 1 | 2 | 3
 
-export type SessionKind = 'logSets' | 'repSets' | 'single'
-
-export interface PrefillSet {
-  w: string
-  r: string
-  done: boolean
-}
-
-export interface Session {
-  id: string
-  type: SessionType
+export interface Exercise {
+  id: string // stable across weeks where the exercise recurs (press-main is always press-main)
   name: string
-  target: string
-  kind: SessionKind
-  sets?: number
-  optional?: boolean
-  noteField?: boolean
-  prefillDone?: boolean
-  prefillSets?: PrefillSet[]
-  // Allow future weeks to add fields without a type error; ignored at runtime.
-  [key: string]: unknown
+  rx: string // prescription, free text: "4x3-5", "40x5, 47.5x5, 52.5x5+ kg"
 }
 
-export interface Day {
-  key: string
-  dow: string
-  date: string
-  today?: boolean
-  sessions: Session[]
-}
-
-export interface Week {
+export interface Block {
   id: string
-  label: string
-  dateRange: string
-  subtitle: string
-  days: Day[]
+  title: string
+  priority: Priority // P1 runs/main lifts/physio, P2 skills/C2, P3 oly + extras
+  exercises: Exercise[]
+  short?: string // compact label used in the week export; falls back to title
+  wendler?: boolean // marks the 5/3/1 main-lift blocks; drives the STATE line
+}
+
+export type DayName = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri'
+
+export interface PlanDay {
+  day: DayName
+  blocks: Block[]
+}
+
+export interface WeekPlan {
+  weekId: string // "2026-wk28"
+  label: string // "6-10 July"
+  wendler?: { cycle: number; week: number }
+  stages?: string // skill-ladder state echoed into the export, e.g. "BMU s1 | DU s1"
+  days: PlanDay[]
 }
 
 // ---------------------------------------------------------------------------
-// The LOG (stored in Cloudflare KV — see section 7 of the brief).
-// Keyed by session id.
+// The LOG — what actually happened. Stored in Cloudflare KV under
+// log:<weekId>, mirrored to localStorage (athx-log-v1:<weekId>).
+// Merge rule: whole-record last-write-wins by updatedAt (single user).
 // ---------------------------------------------------------------------------
 
-export interface SingleLog {
-  done: boolean
-  value?: string
+export interface ExerciseLog {
+  done?: boolean
+  actual?: string // free text, e.g. "52.5x7"
+  rpe?: number | null // 1-10
+  note?: string
 }
 
-export type RepSetsLog = boolean[]
-
-export interface LogSetRow {
-  weight: string
-  reps: string
-  done: boolean
+export interface Deferral {
+  blockId: string
+  from: DayName
+  reason: string
 }
 
-export type LogSetsLog = LogSetRow[]
+export interface WeekLog {
+  exercises: Record<string, ExerciseLog>
+  sessionNotes: Partial<Record<DayName, string>>
+  deferred: Deferral[]
+  moves: Record<string, DayName> // blockId -> day it was reshuffled to
+  maxDU: number | null // weekly max unbroken double-unders
+  c2: string // C2 interval pace/watts quick field
+  updatedAt: number
+}
 
-export type SessionLog = SingleLog | RepSetsLog | LogSetsLog
-
-export type WeekLog = Record<string, SessionLog>
+export type SyncStatus = 'synced' | 'pending' | 'offline' | 'error' | 'auth'

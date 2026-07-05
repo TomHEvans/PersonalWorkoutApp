@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Private mobile-first hybrid training tracker on Cloudflare Pages + KV",
+  "description": "ATHX training tracker: plans as code, logs in Cloudflare KV, weekly export loop",
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",

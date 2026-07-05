@@ -1,97 +1,65 @@
-import { useState } from 'react'
-import type { Week, WeekLog } from '../types'
-import { weekProgress } from '../lib/progress'
-import { ProgressBar } from './ProgressBar'
-import { Legend } from './Legend'
-import type { SyncState } from '../hooks/useWeekLog'
+import type { SyncStatus, WeekPlan } from '../types'
+import { clearToken } from '../lib/api'
 
-function syncText(s: SyncState): string {
-  switch (s) {
-    case 'saving':
-      return 'Saving…'
-    case 'saved':
-      return 'Saved'
-    case 'offline':
-      return 'Offline'
-    case 'error':
-      return 'Error'
-    default:
-      return ''
-  }
+const STATUS_LABEL: Record<SyncStatus, string> = {
+  synced: 'synced',
+  pending: 'saving…',
+  offline: 'offline',
+  error: 'sync error',
+  auth: 'auth',
 }
 
-export function Header({
-  week,
-  weeks,
-  weekId,
-  onWeekChange,
-  log,
-  sync,
-  onCopy,
-  onReset,
-  onClearPasscode,
-}: {
-  week: Week
-  weeks: Week[]
+interface Props {
+  plan: WeekPlan
+  weekIds: string[]
   weekId: string
-  onWeekChange: (id: string) => void
-  log: WeekLog
-  sync: SyncState
-  onCopy: () => void | Promise<void>
-  onReset: () => void
-  onClearPasscode: () => void
-}) {
-  const prog = weekProgress(week, log)
-  const [copied, setCopied] = useState(false)
+  onWeek: (weekId: string) => void
+  status: SyncStatus
+  onRetry: () => void
+}
 
-  const copy = async () => {
-    await onCopy()
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1500)
+export default function Header({ plan, weekIds, weekId, onWeek, status, onRetry }: Props) {
+  const signOut = () => {
+    if (window.confirm('Clear the stored app token?')) {
+      clearToken()
+      window.location.reload()
+    }
   }
 
   return (
-    <header className="app-header">
-      <div className="header-inner">
-        <div className="eyebrow">HYBRID TRAINING</div>
-
-        <div className="week-row">
-          <h1 className="week-label">{week.label}</h1>
-          <select
-            className="week-switch mono"
-            value={weekId}
-            onChange={(e) => onWeekChange(e.target.value)}
-            aria-label="Switch week"
-          >
-            {weeks.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.label}
+    <header className="header">
+      <div className="header-title">
+        <h1>ATHX</h1>
+        {weekIds.length > 1 ? (
+          <select value={weekId} onChange={(e) => onWeek(e.target.value)} aria-label="Week">
+            {weekIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
               </option>
             ))}
           </select>
-          <span className={`sync sync-${sync}`}>{syncText(sync)}</span>
-        </div>
-
-        <div className="mono date-range">{week.dateRange}</div>
-        <div className="subtitle">{week.subtitle}</div>
-
-        <div className="header-progress">
-          <ProgressBar progress={prog} showCount unit="sets" />
-        </div>
-
-        <div className="header-actions">
-          <button type="button" className="action" onClick={copy}>
-            {copied ? 'Copied!' : 'Copy log'}
-          </button>
-          <button type="button" className="action" onClick={onReset}>
-            Reset week
-          </button>
-          <button type="button" className="action ghost" onClick={onClearPasscode}>
-            Clear passcode
-          </button>
-        </div>
-
-        <Legend />
+        ) : (
+          <span className="week-label">{plan.label}</span>
+        )}
+        {plan.wendler && (
+          <span className="wendler-tag">
+            C{plan.wendler.cycle}W{plan.wendler.week}
+          </span>
+        )}
+      </div>
+      <div className="header-right">
+        <button
+          type="button"
+          className={`sync ${status}`}
+          onClick={onRetry}
+          title={`Sync: ${STATUS_LABEL[status]} — tap to retry`}
+        >
+          <span className="sync-dot" />
+          {STATUS_LABEL[status]}
+        </button>
+        <button type="button" className="btn tiny" onClick={signOut} aria-label="Clear token">
+          ⚙
+        </button>
       </div>
     </header>
   )
