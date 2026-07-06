@@ -49,7 +49,20 @@ export default {
           priority: 1,              // P1 runs/main lifts/physio, P2 skills/C2, P3 oly/extras
           wendler: true,            // optional: marks 5/3/1 main lifts, drives "complete" in STATE
           exercises: [
-            { id: 'press-main', name: 'Strict press', rx: '40x5, 47.5x5, 52.5x5+ kg' },
+            {
+              id: 'press-main',
+              name: 'Strict press',
+              rx: '40x5, 47.5x5, 52.5x5+ kg',
+              // Per-set programming: the app pre-loads one editable row per
+              // set (weight x reps) that is ticked off at the gym. Omit `w`
+              // for bodyweight work; omit `sets` entirely for free-text
+              // logging (runs, C2, carries).
+              sets: [
+                { w: 40, r: 5 },
+                { w: 47.5, r: 5 },
+                { w: 52.5, r: '5+' },
+              ],
+            },
           ],
         },
       ],
@@ -63,9 +76,13 @@ export default {
 
 ## Logging model
 
-Per exercise: **done** toggle, **actual** (free text, e.g. `52.5x7`), **RPE**
-(1-10 stepper), optional **note**. Per day: a session note. Per week (Week
-tab): max unbroken DU and C2 pace/watts quick fields.
+Set-based exercises (those with `sets` in the plan) show one row per set —
+**done** tick, **weight**, and **reps**, pre-loaded from the programming and
+editable when the session deviates; the exercise-level tick marks all sets at
+once. Exercises without programmed sets keep a single **done** toggle and a
+free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
+(1-10 stepper) and an optional **note**. Per day: a session note. Per week
+(Week tab): max unbroken DU and C2 pace/watts quick fields.
 
 Block actions:
 
@@ -91,15 +108,16 @@ Mon press: 52.5x7 @8 "strong" | shoulder physio done | BMU done
 NOTES: slept badly (Mon)
 ```
 
-Day lines list blocks sorted by priority: a block with logged actuals renders
-`short: actual @rpe "note"`; a block that is just ticked renders `short done`
-(or `short 2/3 done` when partial). Untouched blocks are omitted. `DEFERRED`
-is always present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
+Day lines list blocks sorted by priority: a set-based exercise renders its
+completed sets (`press: 40x5, 47.5x5, 52.5x7 @8`), a free-text exercise its
+actual, and a block that is just ticked renders `short done` (or `short 2/3
+done` when partial). Untouched blocks are omitted. `DEFERRED` is always
+present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
 
 ## Sync design
 
 - **Local-first**: every change writes to `localStorage` immediately under a
-  versioned key (`athx-log-v1:<weekId>`), then a debounced `PUT` to
+  versioned key (`athx-log-v2:<weekId>`), then a debounced `PUT` to
   `/api/log/:weekId` (KV allows ~1 write/sec per key).
 - **On load**: `GET` from KV, whole-record merge by `updatedAt`, last write
   wins (single user, acceptable).
@@ -126,7 +144,13 @@ var; mismatches return `401`. KV layout: key `log:<weekId>` holds:
 
 ```js
 {
-  exercises: { "press-main": { done: true, actual: "52.5x7", rpe: 8, note: "strong" } },
+  exercises: {
+    // set-based: index-aligned with the plan's sets, pre-loaded values kept as logged
+    "press-main": { sets: [ { w: "40", r: "5", done: true }, { w: "47.5", r: "5", done: true },
+                            { w: "52.5", r: "7", done: true } ], rpe: 8, note: "strong" },
+    // free-text: runs, C2, anything without programmed sets
+    "easy-run": { done: true, actual: "7.5km 42:10", rpe: 6 }
+  },
   sessionNotes: { "Mon": "slept badly" },
   deferred: [ { blockId: "cj", from: "Thu", reason: "London trip" } ],
   moves: { "c2-block": "Wed" },

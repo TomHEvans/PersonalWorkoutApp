@@ -1,5 +1,6 @@
-import type { Block, ExerciseLog, WeekLog, WeekPlan } from '../types'
+import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
+import { effectiveSets, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
 // Deterministic: same plan + log always produces the same text.
@@ -13,6 +14,19 @@ import { DAY_NAMES, blocksForDay, findBlock } from './plans'
 
 const short = (block: Block) => block.short ?? block.title.toLowerCase()
 
+// Collapses a set-based exercise into the ExerciseLog view the segment
+// builder works with: actual = the completed sets ("40x5, 47.5x5, 52.5x7").
+function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
+  if (!exercise.sets) return entry ?? {}
+  const doneSets = effectiveSets(exercise, entry).filter((s) => s.done)
+  return {
+    done: isExerciseDone(exercise, entry),
+    actual: doneSets.map(formatSet).join(', ') || entry?.actual,
+    rpe: entry?.rpe,
+    note: entry?.note,
+  }
+}
+
 function exerciseDetail(name: string | null, e: ExerciseLog): string {
   const parts: string[] = []
   if (name) parts.push(name)
@@ -23,7 +37,7 @@ function exerciseDetail(name: string | null, e: ExerciseLog): string {
 }
 
 function blockSegment(block: Block, log: WeekLog): string | null {
-  const entries = block.exercises.map((ex) => ({ ex, log: log.exercises[ex.id] ?? {} }))
+  const entries = block.exercises.map((ex) => ({ ex, log: exerciseView(ex, log.exercises[ex.id]) }))
   const detailed = entries.filter((e) => e.log.actual || e.log.rpe != null || e.log.note)
   const doneCount = entries.filter((e) => e.log.done).length
 
@@ -43,7 +57,7 @@ function wendlerStatus(plan: WeekPlan, log: WeekLog): string {
   const mains = plan.days.flatMap((d) => d.blocks).filter((b) => b.wendler)
   if (mains.length === 0) return ''
   const exercises = mains.flatMap((b) => b.exercises)
-  const done = exercises.filter((ex) => log.exercises[ex.id]?.done).length
+  const done = exercises.filter((ex) => isExerciseDone(ex, log.exercises[ex.id])).length
   if (done === exercises.length) return ' complete'
   if (done > 0) return ' in progress'
   return ' not started'

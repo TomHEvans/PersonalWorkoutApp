@@ -7,10 +7,17 @@
 
 export type Priority = 1 | 2 | 3
 
+export interface PlanSet {
+  w?: string | number // programmed weight (kg); omit for bodyweight
+  r?: string | number // programmed reps, e.g. 5 or "3-5" or "5+"
+}
+
 export interface Exercise {
   id: string // stable across weeks where the exercise recurs (press-main is always press-main)
   name: string
   rx: string // prescription, free text: "4x3-5", "40x5, 47.5x5, 52.5x5+ kg"
+  sets?: PlanSet[] // per-set programming; set-based exercises log weight+reps per set,
+  // pre-loaded from these values. Exercises without sets log a free-text actual.
 }
 
 export interface Block {
@@ -43,9 +50,16 @@ export interface WeekPlan {
 // Merge rule: whole-record last-write-wins by updatedAt (single user).
 // ---------------------------------------------------------------------------
 
+export interface SetLog {
+  w: string // weight actually lifted (kg), pre-loaded from the plan
+  r: string // reps actually done, pre-loaded from the plan
+  done: boolean
+}
+
 export interface ExerciseLog {
-  done?: boolean
-  actual?: string // free text, e.g. "52.5x7"
+  done?: boolean // non-set exercises only; set-based done derives from the sets
+  actual?: string // free text, e.g. "52.5x7" (non-set exercises)
+  sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   rpe?: number | null // 1-10
   note?: string
 }

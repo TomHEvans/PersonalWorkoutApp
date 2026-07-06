@@ -4,7 +4,7 @@ import { normalize } from './log'
 // localStorage is the local-first copy: every change lands here immediately,
 // the KV PUT follows debounced. Any structural change to the log shape bumps
 // this version (v1 -> v2) so stale state never merges into new code.
-const VERSION = 'athx-log-v1'
+const VERSION = 'athx-log-v2' // v2: per-set logging (SetLog[] on ExerciseLog)
 const logKey = (weekId: string) => `${VERSION}:${weekId}`
 const dirtyKey = (weekId: string) => `${VERSION}:dirty:${weekId}`
 
