@@ -18,9 +18,14 @@ export default {
           short: 'BMU',
           priority: 2,
           exercises: [
-            { id: 'c2b', name: 'Strict chest-to-bar pull-up', rx: '4x3-5' },
-            { id: 'kip-pull', name: 'Hips-to-bar kip pull', rx: '3x5' },
-            { id: 'jbmu', name: 'Jumping bar MU, 3s negative', rx: '3x2' },
+            {
+              id: 'c2b',
+              name: 'Strict chest-to-bar pull-up',
+              rx: '4x3-5',
+              sets: [{ r: '3-5' }, { r: '3-5' }, { r: '3-5' }, { r: '3-5' }],
+            },
+            { id: 'kip-pull', name: 'Hips-to-bar kip pull', rx: '3x5', sets: [{ r: 5 }, { r: 5 }, { r: 5 }] },
+            { id: 'jbmu', name: 'Jumping bar MU, 3s negative', rx: '3x2', sets: [{ r: 2 }, { r: 2 }, { r: 2 }] },
           ],
         },
         {
@@ -30,7 +35,16 @@ export default {
           priority: 1,
           wendler: true,
           exercises: [
-            { id: 'press-main', name: 'Strict press', rx: '40x5, 47.5x5, 52.5x5+ kg' },
+            {
+              id: 'press-main',
+              name: 'Strict press',
+              rx: '40x5, 47.5x5, 52.5x5+ kg',
+              sets: [
+                { w: 40, r: 5 },
+                { w: 47.5, r: 5 },
+                { w: 52.5, r: '5+' },
+              ],
+            },
           ],
         },
         {
@@ -39,8 +53,13 @@ export default {
           short: 'shoulder physio',
           priority: 1,
           exercises: [
-            { id: 'cable-er', name: 'Cable external rotation', rx: '3x8-12' },
-            { id: 'scap', name: 'Scapular retraction', rx: '4x5' },
+            {
+              id: 'cable-er',
+              name: 'Cable external rotation',
+              rx: '3x8-12',
+              sets: [{ r: '8-12' }, { r: '8-12' }, { r: '8-12' }],
+            },
+            { id: 'scap', name: 'Scapular retraction', rx: '4x5', sets: [{ r: 5 }, { r: 5 }, { r: 5 }, { r: 5 }] },
           ],
         },
       ],

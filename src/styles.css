@@ -373,6 +373,53 @@ select:focus {
   font-size: 0.85rem;
 }
 
+/* per-set rows: pre-loaded weight x reps, tick as you go */
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.set-row.done input {
+  color: var(--muted);
+}
+
+.set-check {
+  width: 34px;
+  height: 38px;
+}
+
+.set-num {
+  color: var(--muted);
+  font-size: 0.8rem;
+  min-width: 14px;
+  text-align: center;
+}
+
+.set-w {
+  flex: 1;
+  max-width: 110px;
+  text-align: center;
+}
+
+.set-x {
+  color: var(--muted);
+}
+
+.set-r {
+  flex: 1;
+  max-width: 110px;
+  text-align: center;
+}
+
 .exercise-inputs {
   display: flex;
   gap: 6px;

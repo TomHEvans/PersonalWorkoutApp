@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { DayName, Exercise, ExerciseLog, WeekLog } from '../types'
+import type { DayName, Exercise, ExerciseLog, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
+import { effectiveSets, isExerciseDone } from '../lib/sets'
 
 interface Props {
   placed: PlacedBlock
@@ -29,6 +30,39 @@ function RpeStepper({ value, onChange }: { value: number | null; onChange: (v: n
   )
 }
 
+function SetRow({ index, set, onChange }: { index: number; set: SetLog; onChange: (patch: Partial<SetLog>) => void }) {
+  return (
+    <div className={`set-row${set.done ? ' done' : ''}`}>
+      <button
+        type="button"
+        className={`check set-check${set.done ? ' on' : ''}`}
+        aria-label={`Set ${index + 1} ${set.done ? 'not done' : 'done'}`}
+        onClick={() => onChange({ done: !set.done })}
+      >
+        ✓
+      </button>
+      <span className="set-num">{index + 1}</span>
+      <input
+        className="set-w"
+        inputMode="decimal"
+        placeholder="kg"
+        aria-label={`Set ${index + 1} weight`}
+        value={set.w}
+        onChange={(e) => onChange({ w: e.target.value })}
+      />
+      <span className="set-x">×</span>
+      <input
+        className="set-r"
+        inputMode="numeric"
+        placeholder="reps"
+        aria-label={`Set ${index + 1} reps`}
+        value={set.r}
+        onChange={(e) => onChange({ r: e.target.value })}
+      />
+    </div>
+  )
+}
+
 function ExerciseRow({
   exercise,
   entry,
@@ -38,14 +72,26 @@ function ExerciseRow({
   entry: ExerciseLog
   onChange: (patch: Partial<ExerciseLog>) => void
 }) {
+  const setBased = Boolean(exercise.sets)
+  const sets = effectiveSets(exercise, entry)
+  const done = isExerciseDone(exercise, entry)
+
+  const toggleAll = () => {
+    if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
+    else onChange({ done: !entry.done })
+  }
+
+  const patchSet = (i: number, patch: Partial<SetLog>) =>
+    onChange({ sets: sets.map((s, j) => (j === i ? { ...s, ...patch } : s)) })
+
   return (
-    <div className={`exercise${entry.done ? ' done' : ''}`}>
+    <div className={`exercise${done ? ' done' : ''}`}>
       <div className="exercise-head">
         <button
           type="button"
-          className={`check${entry.done ? ' on' : ''}`}
-          aria-label={entry.done ? 'Mark not done' : 'Mark done'}
-          onClick={() => onChange({ done: !entry.done })}
+          className={`check${done ? ' on' : ''}`}
+          aria-label={done ? 'Mark not done' : 'Mark done'}
+          onClick={toggleAll}
         >
           ✓
         </button>
@@ -54,13 +100,22 @@ function ExerciseRow({
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
+      {setBased && (
+        <div className="sets">
+          {sets.map((s, i) => (
+            <SetRow key={i} index={i} set={s} onChange={(patch) => patchSet(i, patch)} />
+          ))}
+        </div>
+      )}
       <div className="exercise-inputs">
-        <input
-          className="actual"
-          placeholder="actual"
-          value={entry.actual ?? ''}
-          onChange={(e) => onChange({ actual: e.target.value })}
-        />
+        {!setBased && (
+          <input
+            className="actual"
+            placeholder="actual"
+            value={entry.actual ?? ''}
+            onChange={(e) => onChange({ actual: e.target.value })}
+          />
+        )}
         <RpeStepper value={entry.rpe ?? null} onChange={(rpe) => onChange({ rpe })} />
         <input
           className="note"
