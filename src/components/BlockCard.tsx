@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { DayName, Exercise, ExerciseLog, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
-import { effectiveSets, isExerciseDone } from '../lib/sets'
+import { effectiveSets, estimate1RM, isExerciseDone } from '../lib/sets'
 
 interface Props {
   placed: PlacedBlock
@@ -105,6 +105,10 @@ function ExerciseRow({
           {sets.map((s, i) => (
             <SetRow key={i} index={i} set={s} onChange={(patch) => patchSet(i, patch)} />
           ))}
+          {(() => {
+            const e1rm = estimate1RM(sets)
+            return e1rm === null ? null : <span className="e1rm">est. 1RM ~{e1rm} kg</span>
+          })()}
         </div>
       )}
       <div className="exercise-inputs">

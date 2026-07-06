@@ -420,6 +420,12 @@ select:focus {
   text-align: center;
 }
 
+.e1rm {
+  color: var(--accent);
+  font-size: 0.8rem;
+  padding-left: 56px; /* aligns under the inputs, past tick + set number */
+}
+
 .exercise-inputs {
   display: flex;
   gap: 6px;

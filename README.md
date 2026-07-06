@@ -79,7 +79,9 @@ export default {
 Set-based exercises (those with `sets` in the plan) show one row per set —
 **done** tick, **weight**, and **reps**, pre-loaded from the programming and
 editable when the session deviates; the exercise-level tick marks all sets at
-once. Exercises without programmed sets keep a single **done** toggle and a
+once. Weighted exercises show a live **estimated 1RM** (Epley, from the best
+completed set — the AMRAP top set in a 5/3/1 week) inline under the sets.
+Exercises without programmed sets keep a single **done** toggle and a
 free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
 (1-10 stepper) and an optional **note**. Per day: a session note. Per week
 (Week tab): max unbroken DU and C2 pace/watts quick fields.
@@ -109,7 +111,8 @@ NOTES: slept badly (Mon)
 ```
 
 Day lines list blocks sorted by priority: a set-based exercise renders its
-completed sets (`press: 40x5, 47.5x5, 52.5x7 @8`), a free-text exercise its
+completed sets plus the estimated 1RM when one is computable
+(`press: 40x5, 47.5x5, 52.5x7 (e1RM 64.5) @8`), a free-text exercise its
 actual, and a block that is just ticked renders `short done` (or `short 2/3
 done` when partial). Untouched blocks are omitted. `DEFERRED` is always
 present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.

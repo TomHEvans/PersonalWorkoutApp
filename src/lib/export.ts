@@ -1,6 +1,6 @@
 import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
-import { effectiveSets, formatSet, isExerciseDone } from './sets'
+import { effectiveSets, estimate1RM, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
 // Deterministic: same plan + log always produces the same text.
@@ -18,10 +18,13 @@ const short = (block: Block) => block.short ?? block.title.toLowerCase()
 // builder works with: actual = the completed sets ("40x5, 47.5x5, 52.5x7").
 function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
   if (!exercise.sets) return entry ?? {}
-  const doneSets = effectiveSets(exercise, entry).filter((s) => s.done)
+  const sets = effectiveSets(exercise, entry)
+  const doneSets = sets.filter((s) => s.done)
+  const e1rm = estimate1RM(sets)
+  const setsStr = doneSets.map(formatSet).join(', ')
   return {
     done: isExerciseDone(exercise, entry),
-    actual: doneSets.map(formatSet).join(', ') || entry?.actual,
+    actual: (setsStr ? `${setsStr}${e1rm === null ? '' : ` (e1RM ${e1rm})`}` : '') || entry?.actual,
     rpe: entry?.rpe,
     note: entry?.note,
   }
