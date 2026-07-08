@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SyncStatus, WeekLog } from '../types'
 import { ApiError, getLog, putLog } from '../lib/api'
 import { emptyLog } from '../lib/log'
+import { repairLog } from '../lib/migrate'
+import { getPlan } from '../lib/plans'
 import { isDirty, readLocal, setDirty, writeLocal } from '../lib/storage'
 
 const PUT_DEBOUNCE_MS = 1200 // KV allows ~1 write/sec per key
@@ -63,7 +65,11 @@ export function useLog(weekId: string) {
     setStatus('pending')
     ;(async () => {
       try {
-        const remote = await getLog(weekId)
+        const fetched = await getLog(weekId)
+        // KV records are unversioned, so ones written by the v2 app can
+        // still carry pre-loaded/concatenated set values; the repair is
+        // idempotent and free on clean records.
+        const remote = fetched && repairLog(getPlan(weekId), fetched)
         if (cancelled) return
         if (remote && remote.updatedAt > latest.current.updatedAt) {
           setLog(remote)

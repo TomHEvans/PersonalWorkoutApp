@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { DayName, Exercise, ExerciseLog, SetLog, WeekLog } from '../types'
+import type { DayName, Exercise, ExerciseLog, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
 import { effectiveSets, estimate1RM, isExerciseDone } from '../lib/sets'
@@ -30,7 +30,20 @@ function RpeStepper({ value, onChange }: { value: number | null; onChange: (v: n
   )
 }
 
-function SetRow({ index, set, onChange }: { index: number; set: SetLog; onChange: (patch: Partial<SetLog>) => void }) {
+// The programmed values are placeholders only — the inputs start empty, so
+// a logged value always comes from typing (pre-loading them as values let
+// mobile keyboards append to the default, corrupting weights and reps).
+function SetRow({
+  index,
+  planned,
+  set,
+  onChange,
+}: {
+  index: number
+  planned: PlanSet
+  set: SetLog
+  onChange: (patch: Partial<SetLog>) => void
+}) {
   return (
     <div className={`set-row${set.done ? ' done' : ''}`}>
       <button
@@ -45,7 +58,7 @@ function SetRow({ index, set, onChange }: { index: number; set: SetLog; onChange
       <input
         className="set-w"
         inputMode="decimal"
-        placeholder="kg"
+        placeholder={planned.w != null ? String(planned.w) : 'kg'}
         aria-label={`Set ${index + 1} weight`}
         value={set.w}
         onChange={(e) => onChange({ w: e.target.value })}
@@ -54,7 +67,7 @@ function SetRow({ index, set, onChange }: { index: number; set: SetLog; onChange
       <input
         className="set-r"
         inputMode="numeric"
-        placeholder="reps"
+        placeholder={planned.r != null ? String(planned.r) : 'reps'}
         aria-label={`Set ${index + 1} reps`}
         value={set.r}
         onChange={(e) => onChange({ r: e.target.value })}
@@ -103,7 +116,13 @@ function ExerciseRow({
       {setBased && (
         <div className="sets">
           {sets.map((s, i) => (
-            <SetRow key={i} index={i} set={s} onChange={(patch) => patchSet(i, patch)} />
+            <SetRow
+              key={i}
+              index={i}
+              planned={exercise.sets?.[i] ?? {}}
+              set={s}
+              onChange={(patch) => patchSet(i, patch)}
+            />
           ))}
           {(() => {
             const e1rm = estimate1RM(sets)

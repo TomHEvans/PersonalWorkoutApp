@@ -16,12 +16,14 @@ const short = (block: Block) => block.short ?? block.title.toLowerCase()
 
 // Collapses a set-based exercise into the ExerciseLog view the segment
 // builder works with: actual = the completed sets ("40x5, 47.5x5, 52.5x7").
+// Sets ticked done with nothing typed contribute no text — done as
+// prescribed is already carried by the done count, never as a fake actual.
 function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
   if (!exercise.sets) return entry ?? {}
   const sets = effectiveSets(exercise, entry)
   const doneSets = sets.filter((s) => s.done)
   const e1rm = estimate1RM(sets)
-  const setsStr = doneSets.map(formatSet).join(', ')
+  const setsStr = doneSets.map(formatSet).filter(Boolean).join(', ')
   return {
     done: isExerciseDone(exercise, entry),
     actual: (setsStr ? `${setsStr}${e1rm === null ? '' : ` (e1RM ${e1rm})`}` : '') || entry?.actual,
