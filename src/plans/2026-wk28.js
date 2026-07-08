@@ -1,13 +1,16 @@
-// Week 28: 6-10 July 2026. Wendler C1W1 (5s week).
+// Week 28: 6-10 July 2026. Wendler C1W1 (5s week), restructured for recovery.
 //
-// Planner notes: away Thu (full rest) and Sat/Sun. Clean and jerk dropped
-// (P3, travel). T2B not scheduled this week; HSW optional Fri.
+// Planner notes: Mon/Tue banked (press 52.5x8, DL 145x10). Wed full rest
+// (intense DOMS). Thu 10km run only, in London, easy default. Fri salvage
+// gym: OHS + capped squat (no AMRAP, gated on recovery) + knee physio B.
+// Deferred to wk29: plyometrics, C2 baseline, handstand walk. Squat runs one
+// week behind press/DL if Fri squat drops.
 // Reference maxes: squat 1RM ~140 kg (TM 126), deadlift 1RM ~190 kg (TM 171).
 export default {
   weekId: '2026-wk28',
   label: '6-10 July',
   wendler: { cycle: 1, week: 1 },
-  stages: 'BMU s1 | DU s1 | HSW s1 | T2B not scheduled',
+  stages: 'BMU s1 | DU s1 | HSW deferred to wk29 | T2B not scheduled',
   days: [
     {
       day: 'Mon',
@@ -104,7 +107,7 @@ export default {
             {
               id: 'dl-main',
               name: 'Deadlift',
-              rx: 'Warm-up 70/85/102.5 kg x5/5/3, then 110x5, 127.5x5, 145 kg x5+',
+              rx: 'Warm-up 70/85/102.5 kg x5/5/3, then 110x5, 127.5x5, 145 kg x5+. Mixed/hook grip on top sets',
               sets: [
                 { w: 110, r: 5 },
                 { w: 127.5, r: 5 },
@@ -153,40 +156,46 @@ export default {
     },
     {
       day: 'Wed',
+      blocks: [{ id: 'rest', title: 'Full rest (recovery)', short: 'rest', priority: 1, exercises: [] }],
+    },
+    {
+      day: 'Thu',
       blocks: [
         {
-          id: 'knee-plyo',
-          title: 'Knee plyometrics (first, while fresh)',
-          short: 'knee plyo',
+          id: 'run-long',
+          title: '10km run (Runna, moved from Fri)',
+          short: 'long run',
           priority: 1,
           exercises: [
-            { id: 'dj-two-foot', name: 'Drop jump two-foot land', rx: '2x6', sets: [{ r: 6 }, { r: 6 }] },
             {
-              id: 'dj-single',
-              name: 'Drop jump single-leg land and hold',
-              rx: '3x3',
-              sets: [{ r: 3 }, { r: 3 }, { r: 3 }],
+              id: 'run-long-1',
+              name: 'Long run',
+              rx: '10 km. Easy by default; build to progressive only if fully recovered after 2-3 km. Cut to flat 8-10 km if shins niggle.',
             },
-            { id: 'line-jumps', name: 'Forward line jumps', rx: '2x10', sets: [{ r: 10 }, { r: 10 }] },
           ],
         },
+      ],
+    },
+    {
+      day: 'Fri',
+      blocks: [
         {
           id: 'ohs',
-          title: 'Overhead squat (snatch sub)',
+          title: 'Overhead squat (shoulder rehab, first)',
           short: 'OHS',
-          priority: 3,
+          priority: 1,
           exercises: [
             {
               id: 'ohs-main',
               name: 'Overhead squat',
-              rx: '3x5 to RPE 6',
+              rx: '3x5 to RPE 6, position over load. Doubles as squat warm-up. Never deferred while light.',
               sets: [{ r: 5 }, { r: 5 }, { r: 5 }],
             },
           ],
         },
         {
           id: 'squat',
-          title: '5/3/1 Back squat',
+          title: '5/3/1 Back squat (capped, gated on recovery)',
           short: 'squat',
           priority: 1,
           wendler: true,
@@ -194,11 +203,11 @@ export default {
             {
               id: 'squat-main',
               name: 'Back squat',
-              rx: 'Warm-up 50/62.5/75 kg x5/5/3, then 82.5x5, 95x5, 107.5 kg x5+',
+              rx: 'Warm-up 50/62.5/75 kg x5/5/3, then 82.5x5, 95x5, 107.5 kg x5. No AMRAP. Drops if still achy Fri.',
               sets: [
                 { w: 82.5, r: 5 },
                 { w: 95, r: 5 },
-                { w: 107.5, r: '5+' },
+                { w: 107.5, r: 5 },
               ],
             },
           ],
@@ -227,37 +236,6 @@ export default {
               ],
             },
             { id: 'leg-press', name: 'Leg press', rx: '3x12', sets: [{ r: 12 }, { r: 12 }, { r: 12 }] },
-          ],
-        },
-      ],
-    },
-    {
-      day: 'Thu',
-      blocks: [{ id: 'rest', title: 'Rest (away)', short: 'rest', priority: 1, exercises: [] }],
-    },
-    {
-      day: 'Fri',
-      blocks: [
-        {
-          id: 'run-long',
-          title: '10km progressive long run (Runna)',
-          short: 'long run',
-          priority: 1,
-          exercises: [{ id: 'run-long-1', name: 'Progressive long run', rx: '10 km' }],
-        },
-        {
-          id: 'hsw',
-          title: 'Handstand walk (stage 1, optional)',
-          short: 'HSW',
-          priority: 2,
-          exercises: [
-            { id: 'wall-walks', name: 'Wall walks', rx: '3x3', sets: [{ r: 3 }, { r: 3 }, { r: 3 }] },
-            {
-              id: 'shoulder-taps',
-              name: 'Wall shoulder taps',
-              rx: '3x10',
-              sets: [{ r: 10 }, { r: 10 }, { r: 10 }],
-            },
           ],
         },
       ],
