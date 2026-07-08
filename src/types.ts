@@ -46,13 +46,13 @@ export interface WeekPlan {
 
 // ---------------------------------------------------------------------------
 // The LOG — what actually happened. Stored in Cloudflare KV under
-// log:<weekId>, mirrored to localStorage (athx-log-v1:<weekId>).
+// log:<weekId>, mirrored to localStorage (athx-log-v3:<weekId>).
 // Merge rule: whole-record last-write-wins by updatedAt (single user).
 // ---------------------------------------------------------------------------
 
 export interface SetLog {
-  w: string // weight actually lifted (kg), pre-loaded from the plan
-  r: string // reps actually done, pre-loaded from the plan
+  w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
+  r: string // reps actually done; empty until typed (plan value is placeholder only)
   done: boolean
 }
 

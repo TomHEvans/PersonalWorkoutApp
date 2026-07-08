@@ -53,10 +53,10 @@ export default {
               id: 'press-main',
               name: 'Strict press',
               rx: '40x5, 47.5x5, 52.5x5+ kg',
-              // Per-set programming: the app pre-loads one editable row per
-              // set (weight x reps) that is ticked off at the gym. Omit `w`
-              // for bodyweight work; omit `sets` entirely for free-text
-              // logging (runs, C2, carries).
+              // Per-set programming: the app shows one editable row per set
+              // (weight x reps, programmed values as placeholders) that is
+              // ticked off at the gym. Omit `w` for bodyweight work; omit
+              // `sets` entirely for free-text logging (runs, C2, carries).
               sets: [
                 { w: 40, r: 5 },
                 { w: 47.5, r: 5 },
@@ -77,9 +77,10 @@ export default {
 ## Logging model
 
 Set-based exercises (those with `sets` in the plan) show one row per set —
-**done** tick, **weight**, and **reps**, pre-loaded from the programming and
-editable when the session deviates; the exercise-level tick marks all sets at
-once. Weighted exercises show a live **estimated 1RM** (Epley, from the best
+**done** tick, **weight**, and **reps**. The inputs start empty with the
+programming as placeholders — a stored value always means it was typed, and a
+set ticked done with nothing typed counts as done-as-prescribed without
+inventing an actual; the exercise-level tick marks all sets at once. Weighted exercises show a live **estimated 1RM** (Epley, from the best
 completed set — the AMRAP top set in a 5/3/1 week) inline under the sets.
 Exercises without programmed sets keep a single **done** toggle and a
 free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
@@ -120,7 +121,7 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
 ## Sync design
 
 - **Local-first**: every change writes to `localStorage` immediately under a
-  versioned key (`athx-log-v2:<weekId>`), then a debounced `PUT` to
+  versioned key (`athx-log-v3:<weekId>`), then a debounced `PUT` to
   `/api/log/:weekId` (KV allows ~1 write/sec per key).
 - **On load**: `GET` from KV, whole-record merge by `updatedAt`, last write
   wins (single user, acceptable).
@@ -128,8 +129,10 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
   when connectivity returns. The service worker keeps the app shell loading
   offline (PWA, installable).
 - **Versioning rule**: any structural change to the log shape bumps the
-  localStorage key version (`v1` → `v2`) so stale state never merges into new
-  code.
+  localStorage key version (`v1` → `v2` → `v3`) so stale state never merges
+  into new code. KV records are unversioned, so a repair pass
+  (`src/lib/migrate.ts`) runs on every remote read; it is idempotent and a
+  no-op on clean records.
 
 ## The log API
 
@@ -148,7 +151,7 @@ var; mismatches return `401`. KV layout: key `log:<weekId>` holds:
 ```js
 {
   exercises: {
-    // set-based: index-aligned with the plan's sets, pre-loaded values kept as logged
+    // set-based: index-aligned with the plan's sets; empty w/r = untouched (done as prescribed)
     "press-main": { sets: [ { w: "40", r: "5", done: true }, { w: "47.5", r: "5", done: true },
                             { w: "52.5", r: "7", done: true } ], rpe: 8, note: "strong" },
     // free-text: runs, C2, anything without programmed sets
