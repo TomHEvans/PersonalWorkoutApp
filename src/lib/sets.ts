@@ -1,5 +1,21 @@
 import type { Exercise, ExerciseLog, SetLog } from '../types'
 
+// Set weight/reps are captured as numbers, not free text. These keep the
+// stored value a clean numeric string (or empty) at the point of entry, so a
+// prescribed default can never be concatenated onto a typed value ("127" +
+// "130.5" -> "127130.5") and no "x" can slip into a field ("0x5"). Every
+// downstream reader can therefore Number() the value safely.
+//   - weight: digits and at most one decimal point
+//   - reps: whole digits only
+export const sanitizeWeight = (raw: string): string => {
+  const cleaned = raw.replace(/[^0-9.]/g, '')
+  const dot = cleaned.indexOf('.')
+  if (dot === -1) return cleaned
+  return cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, '')
+}
+
+export const sanitizeReps = (raw: string): string => raw.replace(/[^0-9]/g, '')
+
 // The set rows shown (and exported) for a set-based exercise: logged rows
 // where they exist, otherwise empty rows. Rows start empty — the programmed
 // values appear only as input placeholders — so a stored value always means

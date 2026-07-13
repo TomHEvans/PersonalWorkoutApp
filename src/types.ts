@@ -51,6 +51,8 @@ export interface WeekPlan {
 // ---------------------------------------------------------------------------
 
 export interface SetLog {
+  // Stored as a string, but the input sanitizers (sanitizeWeight/sanitizeReps)
+  // keep it a clean numeric string or empty, so every reader can Number() it.
   w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
   r: string // reps actually done; empty until typed (plan value is placeholder only)
   done: boolean

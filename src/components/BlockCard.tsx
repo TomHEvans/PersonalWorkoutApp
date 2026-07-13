@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { DayName, Exercise, ExerciseLog, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
-import { effectiveSets, estimate1RM, isExerciseDone } from '../lib/sets'
+import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
 interface Props {
   placed: PlacedBlock
@@ -61,7 +61,7 @@ function SetRow({
         placeholder={planned.w != null ? String(planned.w) : 'kg'}
         aria-label={`Set ${index + 1} weight`}
         value={set.w}
-        onChange={(e) => onChange({ w: e.target.value })}
+        onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
       />
       <span className="set-x">×</span>
       <input
@@ -70,7 +70,7 @@ function SetRow({
         placeholder={planned.r != null ? String(planned.r) : 'reps'}
         aria-label={`Set ${index + 1} reps`}
         value={set.r}
-        onChange={(e) => onChange({ r: e.target.value })}
+        onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
       />
     </div>
   )
