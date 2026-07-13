@@ -130,9 +130,10 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
   offline (PWA, installable).
 - **Versioning rule**: any structural change to the log shape bumps the
   localStorage key version (`v1` → `v2` → `v3`) so stale state never merges
-  into new code. KV records are unversioned, so a repair pass
-  (`src/lib/migrate.ts`) runs on every remote read; it is idempotent and a
-  no-op on clean records.
+  into new code. KV records are unversioned; v2-era records were repaired by
+  the one-shot v2 → v3 migration (`src/lib/migrate.ts`) and rewritten clean.
+  The repair never runs on v3-era data — a typed `0` weight now legitimately
+  means bodyweight and is kept as logged.
 
 ## The log API
 

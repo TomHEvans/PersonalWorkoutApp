@@ -16,8 +16,12 @@ import type { ExerciseLog, PlanSet, SetLog, WeekLog, WeekPlan } from '../types'
 // zero/garbage weights and untouched non-numeric rep schemes become empty,
 // concatenated weights keep their typed remainder, and plain numeric values
 // (typed, or pre-loaded programming that was completed as written —
-// indistinguishable, and both correct) are kept. Idempotent, so it is safe
-// to run on every read of an unversioned KV record.
+// indistinguishable, and both correct) are kept.
+//
+// Runs ONLY on the one-shot v2 -> v3 localStorage migration. It must never
+// touch v3-era data: under v3 a "0" weight is something the user typed
+// (bodyweight work, e.g. "TRX squat 0x7") and has to be kept as logged,
+// while under v2 a "0" could only be the input corruption.
 
 function repairWeight(value: unknown, planned: PlanSet | undefined): string {
   const w = String(value ?? '').trim()
