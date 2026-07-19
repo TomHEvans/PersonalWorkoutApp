@@ -373,6 +373,71 @@ select:focus {
   font-size: 0.85rem;
 }
 
+/* measurement-type clarity tag next to the exercise name */
+.name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.measure-tag {
+  flex: none;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.measure-tag:hover,
+.measure-tag.open {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.measure-tag.band,
+.measure-tag.time {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* per-exercise measurement adjuster */
+.measure-adjust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.measure-adjust-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.adjust-opt {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.adjust-opt.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+}
+.adjust-opt.reset {
+  color: var(--muted);
+}
+
 /* per-set rows: pre-loaded weight x reps, tick as you go */
 
 .sets {
@@ -418,6 +483,28 @@ select:focus {
   flex: 1;
   max-width: 110px;
   text-align: center;
+}
+
+/* per-set band picker (band-measured exercises), parallel to the weight input */
+.set-band {
+  flex: 1;
+  max-width: 130px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.set-band select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+}
+.band-dot {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
 }
 
 .e1rm {

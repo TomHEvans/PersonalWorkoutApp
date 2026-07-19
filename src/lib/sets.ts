@@ -1,4 +1,4 @@
-import type { Exercise, ExerciseLog, SetLog } from '../types'
+import type { Exercise, ExerciseLog, MeasureType, SetLog } from '../types'
 
 // Set weight/reps are captured as numbers, not free text. These keep the
 // stored value a clean numeric string (or empty) at the point of entry, so a
@@ -33,9 +33,18 @@ export function isExerciseDone(exercise: Exercise, entry: ExerciseLog | undefine
 
 // Export text for a set: only what was actually typed. Empty for an
 // untouched row — callers drop empty strings rather than inventing values.
-export const formatSet = (s: SetLog): string => {
+// The measure picks which field leads (band "red×12" vs weight "52.5x7"); with
+// no measure it falls back to whatever was typed. Passing the measure keeps the
+// export correct after an exercise's type is switched, without wiping fields.
+export const formatSet = (s: SetLog, measure?: MeasureType): string => {
+  const band = (s.band ?? '').trim()
   const w = s.w.trim()
   const r = s.r.trim()
+  if (measure === 'band') return band && r ? `${band}×${r}` : band || r
+  if (measure === 'reps') return r
+  if (measure === 'weightReps') return w && r ? `${w}x${r}` : w ? `${w} kg` : r
+  if (band && r) return `${band}×${r}`
+  if (band) return band
   if (w && r) return `${w}x${r}`
   if (w) return `${w} kg`
   return r

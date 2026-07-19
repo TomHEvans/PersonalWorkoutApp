@@ -1,8 +1,32 @@
 import { useState } from 'react'
-import type { DayName, Exercise, ExerciseLog, PlanSet, SetLog, WeekLog } from '../types'
+import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
+import { measureOf } from '../catalogue'
+import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
+
+// Compact clarity tag next to the exercise name; tapping it opens the adjuster.
+const MEASURE_LABEL: Record<MeasureType, string> = {
+  weightReps: 'load',
+  reps: 'reps',
+  band: 'band',
+  time: 'time',
+  freeText: 'free',
+}
+
+// Adjuster labels + the options offered per exercise structure. A set-based
+// exercise can be logged as load / reps / band (all use the set rows); a
+// non-set exercise as time / note (both use the free-text actual).
+const ADJUST_LABEL: Record<MeasureType, string> = {
+  weightReps: 'Load',
+  reps: 'Reps',
+  band: 'Band',
+  time: 'Time',
+  freeText: 'Note',
+}
+const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
+const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
 
 interface Props {
   placed: PlacedBlock
@@ -30,6 +54,25 @@ function RpeStepper({ value, onChange }: { value: number | null; onChange: (v: n
   )
 }
 
+// Per-set band colour picker (band-measured exercises), parallel to the weight
+// input. A swatch shows the chosen colour; the native select is thumb-friendly.
+function BandSelect({ index, value, onChange }: { index: number; value: string; onChange: (v: string) => void }) {
+  const color = bandColor(value)
+  return (
+    <span className="set-band">
+      <span className="band-dot" style={{ background: color ?? 'transparent', borderColor: color ?? 'var(--hair, #e3e7ed)' }} />
+      <select aria-label={`Set ${index + 1} band`} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">band</option>
+        {BANDS.map((b) => (
+          <option key={b.value} value={b.value}>
+            {b.label}
+          </option>
+        ))}
+      </select>
+    </span>
+  )
+}
+
 // The programmed values are placeholders only — the inputs start empty, so
 // a logged value always comes from typing (pre-loading them as values let
 // mobile keyboards append to the default, corrupting weights and reps).
@@ -37,15 +80,19 @@ function SetRow({
   index,
   planned,
   set,
+  measure,
   onChange,
 }: {
   index: number
   planned: PlanSet
   set: SetLog
+  measure: MeasureType // weightReps shows kg, band shows a band picker, reps neither
   onChange: (patch: Partial<SetLog>) => void
 }) {
+  const showWeight = measure === 'weightReps'
+  const showBand = measure === 'band'
   return (
-    <div className={`set-row${set.done ? ' done' : ''}`}>
+    <div className={`set-row${set.done ? ' done' : ''}${showWeight || showBand ? '' : ' no-load'}`}>
       <button
         type="button"
         className={`check set-check${set.done ? ' on' : ''}`}
@@ -55,15 +102,25 @@ function SetRow({
         ✓
       </button>
       <span className="set-num">{index + 1}</span>
-      <input
-        className="set-w"
-        inputMode="decimal"
-        placeholder={planned.w != null ? String(planned.w) : 'kg'}
-        aria-label={`Set ${index + 1} weight`}
-        value={set.w}
-        onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
-      />
-      <span className="set-x">×</span>
+      {showWeight && (
+        <>
+          <input
+            className="set-w"
+            inputMode="decimal"
+            placeholder={planned.w != null ? String(planned.w) : 'kg'}
+            aria-label={`Set ${index + 1} weight`}
+            value={set.w}
+            onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
+          />
+          <span className="set-x">×</span>
+        </>
+      )}
+      {showBand && (
+        <>
+          <BandSelect index={index} value={set.band ?? ''} onChange={(band) => onChange({ band })} />
+          <span className="set-x">×</span>
+        </>
+      )}
       <input
         className="set-r"
         inputMode="numeric"
@@ -85,9 +142,13 @@ function ExerciseRow({
   entry: ExerciseLog
   onChange: (patch: Partial<ExerciseLog>) => void
 }) {
+  const [adjusting, setAdjusting] = useState(false)
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
+  const measure = entry.measure ?? measureOf(exercise) // in-app override wins
+  const tag = MEASURE_LABEL[measure]
+  const options = setBased ? SET_MEASURES : FREE_MEASURES
 
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
@@ -109,10 +170,48 @@ function ExerciseRow({
           ✓
         </button>
         <div className="exercise-name">
-          <span>{exercise.name}</span>
+          <span className="name-line">
+            {exercise.name}
+            <button
+              type="button"
+              className={`measure-tag ${measure} adjustable${adjusting ? ' open' : ''}`}
+              aria-label={`Logged as ${ADJUST_LABEL[measure]} — tap to change`}
+              onClick={() => setAdjusting((v) => !v)}
+            >
+              {tag} ▾
+            </button>
+          </span>
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
+      {adjusting && (
+        <div className="measure-adjust">
+          <span className="measure-adjust-label">Log as</span>
+          {options.map((opt) => (
+            <button
+              type="button"
+              key={opt}
+              className={`adjust-opt${measure === opt ? ' active' : ''}`}
+              onClick={() => {
+                onChange({ measure: opt })
+                setAdjusting(false)
+              }}
+            >
+              {ADJUST_LABEL[opt]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`adjust-opt reset${entry.measure == null ? ' active' : ''}`}
+            onClick={() => {
+              onChange({ measure: undefined })
+              setAdjusting(false)
+            }}
+          >
+            Auto
+          </button>
+        </div>
+      )}
       {setBased && (
         <div className="sets">
           {sets.map((s, i) => (
@@ -121,6 +220,7 @@ function ExerciseRow({
               index={i}
               planned={exercise.sets?.[i] ?? {}}
               set={s}
+              measure={measure}
               onChange={(patch) => patchSet(i, patch)}
             />
           ))}
@@ -134,7 +234,7 @@ function ExerciseRow({
         {!setBased && (
           <input
             className="actual"
-            placeholder="actual"
+            placeholder={measure === 'time' ? 'time (e.g. 2:05/500m)' : 'actual'}
             value={entry.actual ?? ''}
             onChange={(e) => onChange({ actual: e.target.value })}
           />
