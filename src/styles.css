@@ -373,6 +373,31 @@ select:focus {
   font-size: 0.85rem;
 }
 
+/* measurement-type clarity tag next to the exercise name */
+.name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.measure-tag {
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--hair, #e3e7ed);
+  border-radius: 999px;
+  padding: 1px 7px;
+  line-height: 1.5;
+}
+.measure-tag.band,
+.measure-tag.time {
+  color: #1e90a8;
+  border-color: #b7dfe8;
+}
+
 /* per-set rows: pre-loaded weight x reps, tick as you go */
 
 .sets {

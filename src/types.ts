@@ -12,10 +12,22 @@ export interface PlanSet {
   r?: string | number // programmed reps, e.g. 5 or "3-5" or "5+"
 }
 
+// How an exercise is measured / logged. Layered on additively — it refines the
+// existing renderer (does the weight field show, is there a band, is the actual
+// a time) without changing the stored log shape. Resolved from the exercise's
+// `measure`, else the catalogue (src/catalogue), else inferred from `sets`.
+//   weightReps  per-set weight + reps (loaded lifts)
+//   reps        per-set reps only, bodyweight — the weight field is hidden
+//   band        per-set reps with a resistance band (band named in rx)
+//   time        a single timed / interval actual (mm:ss, pace)
+//   freeText    a free-text actual (runs, mixed efforts)
+export type MeasureType = 'weightReps' | 'reps' | 'band' | 'time' | 'freeText'
+
 export interface Exercise {
   id: string // stable across weeks where the exercise recurs (press-main is always press-main)
   name: string
   rx: string // prescription, free text: "4x3-5", "40x5, 47.5x5, 52.5x5+ kg"
+  measure?: MeasureType // how it is logged this week; else from catalogue, else inferred
   sets?: PlanSet[] // per-set programming; set-based exercises log weight+reps per set,
   // pre-loaded from these values. Exercises without sets log a free-text actual.
 }

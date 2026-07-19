@@ -1,8 +1,18 @@
 import { useState } from 'react'
-import type { DayName, Exercise, ExerciseLog, PlanSet, SetLog, WeekLog } from '../types'
+import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
+import { measureOf } from '../catalogue'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
+
+// Compact clarity tag next to the exercise name; freeText shows none.
+const MEASURE_LABEL: Record<MeasureType, string> = {
+  weightReps: 'load',
+  reps: 'reps',
+  band: 'band',
+  time: 'time',
+  freeText: '',
+}
 
 interface Props {
   placed: PlacedBlock
@@ -37,15 +47,17 @@ function SetRow({
   index,
   planned,
   set,
+  showWeight,
   onChange,
 }: {
   index: number
   planned: PlanSet
   set: SetLog
+  showWeight: boolean // hidden for bodyweight (reps) and banded work
   onChange: (patch: Partial<SetLog>) => void
 }) {
   return (
-    <div className={`set-row${set.done ? ' done' : ''}`}>
+    <div className={`set-row${set.done ? ' done' : ''}${showWeight ? '' : ' no-weight'}`}>
       <button
         type="button"
         className={`check set-check${set.done ? ' on' : ''}`}
@@ -55,15 +67,19 @@ function SetRow({
         ✓
       </button>
       <span className="set-num">{index + 1}</span>
-      <input
-        className="set-w"
-        inputMode="decimal"
-        placeholder={planned.w != null ? String(planned.w) : 'kg'}
-        aria-label={`Set ${index + 1} weight`}
-        value={set.w}
-        onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
-      />
-      <span className="set-x">×</span>
+      {showWeight && (
+        <>
+          <input
+            className="set-w"
+            inputMode="decimal"
+            placeholder={planned.w != null ? String(planned.w) : 'kg'}
+            aria-label={`Set ${index + 1} weight`}
+            value={set.w}
+            onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
+          />
+          <span className="set-x">×</span>
+        </>
+      )}
       <input
         className="set-r"
         inputMode="numeric"
@@ -88,6 +104,9 @@ function ExerciseRow({
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
+  const measure = measureOf(exercise)
+  const showWeight = measure === 'weightReps' // reps / band hide the kg field
+  const tag = MEASURE_LABEL[measure]
 
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
@@ -109,7 +128,10 @@ function ExerciseRow({
           ✓
         </button>
         <div className="exercise-name">
-          <span>{exercise.name}</span>
+          <span className="name-line">
+            {exercise.name}
+            {tag && <span className={`measure-tag ${measure}`}>{tag}</span>}
+          </span>
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
@@ -121,6 +143,7 @@ function ExerciseRow({
               index={i}
               planned={exercise.sets?.[i] ?? {}}
               set={s}
+              showWeight={showWeight}
               onChange={(patch) => patchSet(i, patch)}
             />
           ))}
@@ -134,7 +157,7 @@ function ExerciseRow({
         {!setBased && (
           <input
             className="actual"
-            placeholder="actual"
+            placeholder={measure === 'time' ? 'time (e.g. 2:05/500m)' : 'actual'}
             value={entry.actual ?? ''}
             onChange={(e) => onChange({ actual: e.target.value })}
           />
