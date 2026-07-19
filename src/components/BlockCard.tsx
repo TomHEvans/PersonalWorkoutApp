@@ -90,6 +90,7 @@ function SetRow({
 }) {
   const showWeight = measure === 'weightReps'
   const showBand = measure === 'band'
+  const showTime = measure === 'time' // time replaces the reps input entirely
   return (
     <div className={`set-row${set.done ? ' done' : ''}${showWeight || showBand ? '' : ' no-load'}`}>
       <button
@@ -120,21 +121,31 @@ function SetRow({
           <span className="set-x">×</span>
         </>
       )}
-      <input
-        className="set-r"
-        inputMode="numeric"
-        placeholder={planned.r != null ? String(planned.r) : 'reps'}
-        aria-label={`Set ${index + 1} reps`}
-        value={set.r}
-        onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
-      />
+      {showTime ? (
+        <input
+          className="set-t"
+          placeholder={planned.r != null ? String(planned.r) : 'mm:ss'}
+          aria-label={`Set ${index + 1} time`}
+          value={set.t ?? ''}
+          onChange={(e) => onChange({ t: e.target.value })}
+        />
+      ) : (
+        <input
+          className="set-r"
+          inputMode="numeric"
+          placeholder={planned.r != null ? String(planned.r) : 'reps'}
+          aria-label={`Set ${index + 1} reps`}
+          value={set.r}
+          onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
+        />
+      )}
     </div>
   )
 }
 
 // Searchable catalogue picker for logging a different exercise than planned.
 // Set-based slots only offer movements that can log per-set rows (load/reps/
-// band); free-text slots can log anything as an actual, so they offer all.
+// band/time); free-text slots can log anything as an actual, so they offer all.
 function SwapPicker({
   exercise,
   entry,

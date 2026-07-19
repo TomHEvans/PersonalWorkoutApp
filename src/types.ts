@@ -68,6 +68,7 @@ export interface SetLog {
   w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
   r: string // reps actually done; empty until typed (plan value is placeholder only)
   band?: string // band colour used (band-measured exercises only; see src/lib/bands)
+  t?: string // time taken (time-measured sets; free format, e.g. "0:45" or "1min")
   done: boolean
 }
 

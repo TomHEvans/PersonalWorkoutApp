@@ -248,8 +248,9 @@ export function allExercises(): CatalogueListing[] {
 }
 
 // Which measurement types a slot's structure can physically log: set-based
-// slots log per-set rows, free-text slots log a single actual.
-export const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
+// slots log per-set rows (kg×reps / reps / band / time-per-set), free-text
+// slots log a single actual (time or note).
+export const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band', 'time']
 export const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
 
 // The effective measurement for a slot, considering the log's in-app overrides:

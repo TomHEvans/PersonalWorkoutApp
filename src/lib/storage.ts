@@ -6,7 +6,7 @@ import { repairLog } from './migrate'
 // localStorage is the local-first copy: every change lands here immediately,
 // the KV PUT follows debounced. Any structural change to the log shape bumps
 // this version (v1 -> ... -> v5) so stale state never merges into new code.
-const VERSION = 'athx-log-v5' // v5: per-exercise swap (logged-as) override
+const VERSION = 'athx-log-v5' // v5: per-exercise swap override + per-set time
 const V4 = 'athx-log-v4' // v4: per-set band colour + per-exercise measure override
 const V3 = 'athx-log-v3' // v3: set rows start empty; programming is placeholder only
 const V2 = 'athx-log-v2' // v2 pre-loaded programmed values into the set rows

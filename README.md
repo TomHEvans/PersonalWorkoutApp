@@ -89,9 +89,10 @@ free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
 
 Each exercise resolves a **measurement type** from the catalogue
 (`src/catalogue`): `weightReps` (kg × reps rows), `reps` (rep rows, no kg
-field), `band` (a per-set band-colour picker, `src/lib/bands.ts`), `time` /
-`freeText` (the actual field). Two in-app overrides, both stored in the log so
-they sync across devices:
+field), `band` (a per-set band-colour picker, `src/lib/bands.ts`), `time`
+(a time entry per set on set-based work, or the actual field on free-text
+work), `freeText` (the actual field). Two in-app overrides, both stored in the
+log so they sync across devices:
 
 - the **type tag** next to the name (e.g. `LOAD ▾`) opens **Log as** to switch
   how the exercise is measured (Auto reverts to the catalogue default);

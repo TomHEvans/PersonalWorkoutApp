@@ -565,6 +565,12 @@ select:focus {
   text-align: center;
 }
 
+.set-t {
+  flex: 1;
+  max-width: 160px;
+  text-align: center;
+}
+
 /* per-set band picker (band-measured exercises), parallel to the weight input */
 .set-band {
   flex: 1;
