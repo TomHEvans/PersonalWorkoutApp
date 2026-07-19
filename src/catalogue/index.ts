@@ -85,11 +85,11 @@ const CATALOGUE: Record<string, CatalogueExercise> = {
   'hollow-hold': { name: 'Hollow hold', measures: ['time'] },
   'dead-hang': { name: 'Dead hang', measures: ['time'] },
   'l-sit': { name: 'L-sit', measures: ['time'] },
-  'farmers-carry': { name: "Farmer's carry", measures: ['time', 'freeText'] },
-  'sled-push': { name: 'Sled push', measures: ['freeText', 'time'] },
-  'row-erg': { name: 'Row (erg)', measures: ['freeText', 'time'] },
-  'ski-erg': { name: 'Ski erg', measures: ['freeText', 'time'] },
-  'assault-bike': { name: 'Assault bike', measures: ['freeText', 'time'] },
+  'farmers-carry': { name: "Farmer's carry", measures: ['time', 'distance', 'freeText'] },
+  'sled-push': { name: 'Sled push', measures: ['freeText', 'time', 'distance'] },
+  'row-erg': { name: 'Row (erg)', measures: ['freeText', 'time', 'cal'] },
+  'ski-erg': { name: 'Ski erg', measures: ['freeText', 'time', 'cal'] },
+  'assault-bike': { name: 'Assault bike', measures: ['freeText', 'time', 'cal'] },
   'band-pull-apart': { name: 'Band pull-apart', measures: ['reps', 'band'] },
   'face-pull': { name: 'Face pull', measures: ['reps'] },
   'clamshell': { name: 'Clamshell', measures: ['reps', 'band'] },
@@ -163,15 +163,15 @@ const CATALOGUE: Record<string, CatalogueExercise> = {
   'turkish-get-up': { name: 'Turkish get-up', measures: ['reps', 'weightReps'] },
 
   // ---- Machines / carries / running (CrossFit + Hyrox) ----
-  'echo-bike': { name: 'Echo bike', measures: ['freeText', 'time'] },
-  'bike-erg': { name: 'Bike erg (C2)', measures: ['freeText', 'time'] },
-  'sled-pull': { name: 'Sled pull', measures: ['time', 'freeText'] },
+  'echo-bike': { name: 'Echo bike', measures: ['freeText', 'time', 'cal'] },
+  'bike-erg': { name: 'Bike erg (C2)', measures: ['freeText', 'time', 'cal'] },
+  'sled-pull': { name: 'Sled pull', measures: ['time', 'distance', 'freeText'] },
   'sandbag-clean': { name: 'Sandbag clean', measures: ['reps', 'weightReps'] },
-  'sandbag-carry': { name: 'Sandbag carry', measures: ['time', 'freeText'] },
-  'sandbag-lunge': { name: 'Sandbag lunge', measures: ['reps', 'time', 'weightReps'] },
+  'sandbag-carry': { name: 'Sandbag carry', measures: ['time', 'distance', 'freeText'] },
+  'sandbag-lunge': { name: 'Sandbag lunge', measures: ['reps', 'time', 'weightReps', 'distance'] },
   'd-ball-over-shoulder': { name: 'D-ball over shoulder', measures: ['reps', 'weightReps'] },
-  'shuttle-run': { name: 'Shuttle run', measures: ['time', 'freeText'] },
-  'run': { name: 'Run', measures: ['freeText', 'time'] },
+  'shuttle-run': { name: 'Shuttle run', measures: ['time', 'distance', 'freeText'] },
+  'run': { name: 'Run', measures: ['freeText', 'time', 'distance'] },
 
   // ---- Hyrox stations (fixed race format; log the station time) ----
   'hyrox-ski': { name: 'HYROX SkiErg (1000 m)', measures: ['time', 'freeText'] },
@@ -248,10 +248,10 @@ export function allExercises(): CatalogueListing[] {
 }
 
 // Which measurement types a slot's structure can physically log: set-based
-// slots log per-set rows (kg×reps / reps / band / time-per-set), free-text
-// slots log a single actual (time or note).
-export const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band', 'time']
-export const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
+// slots log per-set rows (kg×reps / reps / band / time / cal / distance),
+// free-text slots log a single actual (time / cal / distance / note).
+export const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band', 'time', 'cal', 'distance']
+export const FREE_MEASURES: MeasureType[] = ['time', 'cal', 'distance', 'freeText']
 
 // The effective measurement for a slot, considering the log's in-app overrides:
 // explicit measure override > swapped exercise's default > plan/catalogue

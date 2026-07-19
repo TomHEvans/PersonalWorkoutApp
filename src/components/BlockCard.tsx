@@ -13,18 +13,29 @@ const MEASURE_LABEL: Record<MeasureType, string> = {
   reps: 'reps',
   band: 'band',
   time: 'time',
+  cal: 'cal',
+  distance: 'dist',
   freeText: 'free',
 }
 
 // Adjuster labels + the options offered per exercise structure. A set-based
-// exercise can be logged as load / reps / band (all use the set rows); a
-// non-set exercise as time / note (both use the free-text actual).
+// exercise logs per-set rows (load / reps / band / time / cal / distance); a
+// non-set exercise logs a single actual (time / cal / distance / note).
 const ADJUST_LABEL: Record<MeasureType, string> = {
   weightReps: 'Load',
   reps: 'Reps',
   band: 'Band',
   time: 'Time',
+  cal: 'Cal',
+  distance: 'Dist',
   freeText: 'Note',
+}
+
+// Placeholder for the free-text actual, per measurement.
+const ACTUAL_PLACEHOLDER: Partial<Record<MeasureType, string>> = {
+  time: 'time (e.g. 2:05/500m)',
+  cal: 'calories',
+  distance: 'distance (e.g. 200m)',
 }
 
 interface Props {
@@ -121,7 +132,7 @@ function SetRow({
           <span className="set-x">×</span>
         </>
       )}
-      {showTime ? (
+      {measure === 'time' && (
         <input
           className="set-t"
           placeholder={planned.r != null ? String(planned.r) : 'mm:ss'}
@@ -129,7 +140,27 @@ function SetRow({
           value={set.t ?? ''}
           onChange={(e) => onChange({ t: e.target.value })}
         />
-      ) : (
+      )}
+      {measure === 'cal' && (
+        <input
+          className="set-t"
+          inputMode="numeric"
+          placeholder="cal"
+          aria-label={`Set ${index + 1} calories`}
+          value={set.cal ?? ''}
+          onChange={(e) => onChange({ cal: sanitizeReps(e.target.value) })}
+        />
+      )}
+      {measure === 'distance' && (
+        <input
+          className="set-t"
+          placeholder="distance (e.g. 200m)"
+          aria-label={`Set ${index + 1} distance`}
+          value={set.dist ?? ''}
+          onChange={(e) => onChange({ dist: e.target.value })}
+        />
+      )}
+      {!showTime && measure !== 'cal' && measure !== 'distance' && (
         <input
           className="set-r"
           inputMode="numeric"
@@ -344,7 +375,7 @@ function ExerciseRow({
         {!setBased && (
           <input
             className="actual"
-            placeholder={measure === 'time' ? 'time (e.g. 2:05/500m)' : 'actual'}
+            placeholder={ACTUAL_PLACEHOLDER[measure] ?? 'actual'}
             value={entry.actual ?? ''}
             onChange={(e) => onChange({ actual: e.target.value })}
           />

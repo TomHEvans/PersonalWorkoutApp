@@ -42,6 +42,11 @@ export const formatSet = (s: SetLog, measure?: MeasureType): string => {
   const r = s.r.trim()
   const t = (s.t ?? '').trim()
   if (measure === 'time') return t
+  if (measure === 'cal') {
+    const cal = (s.cal ?? '').trim()
+    return cal ? `${cal} cal` : ''
+  }
+  if (measure === 'distance') return (s.dist ?? '').trim()
   if (measure === 'band') return band && r ? `${band}×${r}` : band || r
   if (measure === 'reps') return r
   if (measure === 'weightReps') return w && r ? `${w}x${r}` : w ? `${w} kg` : r

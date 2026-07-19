@@ -518,6 +518,12 @@ select:focus {
   font-size: 0.85rem;
 }
 
+/* visible build marker in the header */
+.build-tag {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
 /* per-set rows: pre-loaded weight x reps, tick as you go */
 
 .sets {

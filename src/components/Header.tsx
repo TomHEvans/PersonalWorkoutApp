@@ -1,5 +1,6 @@
 import type { SyncStatus, WeekPlan } from '../types'
 import { clearToken } from '../lib/api'
+import { APP_VERSION } from '../version'
 
 const STATUS_LABEL: Record<SyncStatus, string> = {
   synced: 'synced',
@@ -48,6 +49,9 @@ export default function Header({ plan, weekIds, weekId, onWeek, status, onRetry 
         )}
       </div>
       <div className="header-right">
+        <span className="build-tag" title="App version">
+          {APP_VERSION}
+        </span>
         <button
           type="button"
           className={`sync ${status}`}
