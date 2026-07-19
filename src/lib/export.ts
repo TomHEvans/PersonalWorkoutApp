@@ -20,7 +20,19 @@ const short = (block: Block) => block.short ?? block.title.toLowerCase()
 // Sets ticked done with nothing typed contribute no text — done as
 // prescribed is already carried by the done count, never as a fake actual.
 function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
-  if (!exercise.sets) return entry ?? {}
+  if (!exercise.sets) {
+    const view = entry ?? {}
+    // A bare number typed into a calories-measured actual gets its unit in the
+    // export, so "45" reads as "45 cal" to the planning chat.
+    if (
+      resolveMeasure(exercise, entry) === 'cal' &&
+      view.actual &&
+      /^\d+(\.\d+)?$/.test(view.actual.trim())
+    ) {
+      return { ...view, actual: `${view.actual.trim()} cal` }
+    }
+    return view
+  }
   const measure = resolveMeasure(exercise, entry)
   const sets = effectiveSets(exercise, entry)
   const doneSets = sets.filter((s) => s.done)
@@ -78,7 +90,12 @@ function wendlerStatus(plan: WeekPlan, log: WeekLog): string {
   const mains = plan.days.flatMap((d) => d.blocks).filter((b) => b.wendler)
   if (mains.length === 0) return ''
   const exercises = mains.flatMap((b) => b.exercises)
-  const done = exercises.filter((ex) => isExerciseDone(ex, log.exercises[ex.id])).length
+  // A swapped slot means the programmed lift was NOT done — it must not count
+  // toward Wendler completion (the detail line still shows what replaced it).
+  const done = exercises.filter((ex) => {
+    const entry = log.exercises[ex.id]
+    return !entry?.swap && isExerciseDone(ex, entry)
+  }).length
   if (done === exercises.length) return ' complete'
   if (done > 0) return ' in progress'
   return ' not started'
