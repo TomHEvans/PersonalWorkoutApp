@@ -3,6 +3,7 @@ import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, Week
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
 import { measureOf } from '../catalogue'
+import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
 // Compact clarity tag next to the exercise name; freeText shows none.
@@ -40,6 +41,25 @@ function RpeStepper({ value, onChange }: { value: number | null; onChange: (v: n
   )
 }
 
+// Per-set band colour picker (band-measured exercises), parallel to the weight
+// input. A swatch shows the chosen colour; the native select is thumb-friendly.
+function BandSelect({ index, value, onChange }: { index: number; value: string; onChange: (v: string) => void }) {
+  const color = bandColor(value)
+  return (
+    <span className="set-band">
+      <span className="band-dot" style={{ background: color ?? 'transparent', borderColor: color ?? 'var(--hair, #e3e7ed)' }} />
+      <select aria-label={`Set ${index + 1} band`} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">band</option>
+        {BANDS.map((b) => (
+          <option key={b.value} value={b.value}>
+            {b.label}
+          </option>
+        ))}
+      </select>
+    </span>
+  )
+}
+
 // The programmed values are placeholders only — the inputs start empty, so
 // a logged value always comes from typing (pre-loading them as values let
 // mobile keyboards append to the default, corrupting weights and reps).
@@ -47,17 +67,19 @@ function SetRow({
   index,
   planned,
   set,
-  showWeight,
+  measure,
   onChange,
 }: {
   index: number
   planned: PlanSet
   set: SetLog
-  showWeight: boolean // hidden for bodyweight (reps) and banded work
+  measure: MeasureType // weightReps shows kg, band shows a band picker, reps neither
   onChange: (patch: Partial<SetLog>) => void
 }) {
+  const showWeight = measure === 'weightReps'
+  const showBand = measure === 'band'
   return (
-    <div className={`set-row${set.done ? ' done' : ''}${showWeight ? '' : ' no-weight'}`}>
+    <div className={`set-row${set.done ? ' done' : ''}${showWeight || showBand ? '' : ' no-load'}`}>
       <button
         type="button"
         className={`check set-check${set.done ? ' on' : ''}`}
@@ -77,6 +99,12 @@ function SetRow({
             value={set.w}
             onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
           />
+          <span className="set-x">×</span>
+        </>
+      )}
+      {showBand && (
+        <>
+          <BandSelect index={index} value={set.band ?? ''} onChange={(band) => onChange({ band })} />
           <span className="set-x">×</span>
         </>
       )}
@@ -105,7 +133,6 @@ function ExerciseRow({
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
   const measure = measureOf(exercise)
-  const showWeight = measure === 'weightReps' // reps / band hide the kg field
   const tag = MEASURE_LABEL[measure]
 
   const toggleAll = () => {
@@ -143,7 +170,7 @@ function ExerciseRow({
               index={i}
               planned={exercise.sets?.[i] ?? {}}
               set={s}
-              showWeight={showWeight}
+              measure={measure}
               onChange={(patch) => patchSet(i, patch)}
             />
           ))}

@@ -67,6 +67,7 @@ export interface SetLog {
   // keep it a clean numeric string or empty, so every reader can Number() it.
   w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
   r: string // reps actually done; empty until typed (plan value is placeholder only)
+  band?: string // band colour used (band-measured exercises only; see src/lib/bands)
   done: boolean
 }
 

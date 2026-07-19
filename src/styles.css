@@ -445,6 +445,28 @@ select:focus {
   text-align: center;
 }
 
+/* per-set band picker (band-measured exercises), parallel to the weight input */
+.set-band {
+  flex: 1;
+  max-width: 130px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.set-band select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+}
+.band-dot {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
 .e1rm {
   color: var(--accent);
   font-size: 0.8rem;

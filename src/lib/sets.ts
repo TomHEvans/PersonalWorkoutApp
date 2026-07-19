@@ -33,9 +33,13 @@ export function isExerciseDone(exercise: Exercise, entry: ExerciseLog | undefine
 
 // Export text for a set: only what was actually typed. Empty for an
 // untouched row — callers drop empty strings rather than inventing values.
+// Banded sets read "red×12" (band × reps) in place of weight × reps.
 export const formatSet = (s: SetLog): string => {
+  const band = (s.band ?? '').trim()
   const w = s.w.trim()
   const r = s.r.trim()
+  if (band && r) return `${band}×${r}`
+  if (band) return band
   if (w && r) return `${w}x${r}`
   if (w) return `${w} kg`
   return r
