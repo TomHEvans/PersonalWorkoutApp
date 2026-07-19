@@ -84,30 +84,31 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(cacheFirst(request))
 })
 
+// Network-first for the app shell: a new deploy shows up on the next load,
+// with a cache fallback so it still opens offline. (Cache-first left the app
+// stale after a deploy until the service worker was manually cleared.)
+// Always return a *freshly built* Response for the navigation — returning a
+// raw fetch()/cache Response object to a main-frame navigation can fail with
+// ERR_FAILED in some engines.
+function htmlResponse(body) {
+  return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+}
+
 async function appShell() {
   const cache = await caches.open(SHELL_CACHE)
-  const cached = await cache.match('/index.html')
-  // Refresh the cached shell in the background when online.
-  fetch('/index.html')
-    .then((res) => {
-      if (res && res.ok) cache.put('/index.html', res.clone())
-    })
-    .catch(() => {})
-  if (cached) {
-    // Reconstruct a fresh Response from the cached body. Returning a
-    // cache-origin Response object directly to a main-frame navigation can
-    // fail with ERR_FAILED in some engines; a freshly built Response is safe.
-    const body = await cached.arrayBuffer()
-    return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
-  }
-  // Not cached yet (first visit): go to the network by URL string, never the
-  // original navigate-mode Request object.
   try {
-    const net = await fetch('/index.html')
-    if (net && net.ok) return net
+    // Fetch by URL string, never the navigate-mode Request object.
+    const net = await fetch('/index.html', { cache: 'no-store' })
+    if (net && net.ok) {
+      const body = await net.arrayBuffer()
+      cache.put('/index.html', htmlResponse(body)) // refresh the offline copy
+      return htmlResponse(body)
+    }
   } catch {
-    /* offline with no cache */
+    /* offline — fall back to cache below */
   }
+  const cached = await cache.match('/index.html')
+  if (cached) return htmlResponse(await cached.arrayBuffer())
   return offline({ error: 'offline shell' })
 }
 

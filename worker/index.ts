@@ -22,6 +22,8 @@ export default {
     }
 
     // Static asset, or SPA fallback to index.html for unknown paths.
+    // (sw.js is served by the assets layer as max-age=0, must-revalidate, so
+    // the worker script is always revalidated — no override needed here.)
     const res = await env.ASSETS.fetch(request)
     if (res.status === 404) {
       return env.ASSETS.fetch(new Request(new URL('/', request.url), request))
