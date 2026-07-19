@@ -75,6 +75,7 @@ export interface ExerciseLog {
   done?: boolean // non-set exercises only; set-based done derives from the sets
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
+  measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
   rpe?: number | null // 1-10
   note?: string
 }

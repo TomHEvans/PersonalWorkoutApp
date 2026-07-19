@@ -6,14 +6,27 @@ import { measureOf } from '../catalogue'
 import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
-// Compact clarity tag next to the exercise name; freeText shows none.
+// Compact clarity tag next to the exercise name; tapping it opens the adjuster.
 const MEASURE_LABEL: Record<MeasureType, string> = {
   weightReps: 'load',
   reps: 'reps',
   band: 'band',
   time: 'time',
-  freeText: '',
+  freeText: 'free',
 }
+
+// Adjuster labels + the options offered per exercise structure. A set-based
+// exercise can be logged as load / reps / band (all use the set rows); a
+// non-set exercise as time / note (both use the free-text actual).
+const ADJUST_LABEL: Record<MeasureType, string> = {
+  weightReps: 'Load',
+  reps: 'Reps',
+  band: 'Band',
+  time: 'Time',
+  freeText: 'Note',
+}
+const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
+const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
 
 interface Props {
   placed: PlacedBlock
@@ -129,11 +142,13 @@ function ExerciseRow({
   entry: ExerciseLog
   onChange: (patch: Partial<ExerciseLog>) => void
 }) {
+  const [adjusting, setAdjusting] = useState(false)
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
-  const measure = measureOf(exercise)
+  const measure = entry.measure ?? measureOf(exercise) // in-app override wins
   const tag = MEASURE_LABEL[measure]
+  const options = setBased ? SET_MEASURES : FREE_MEASURES
 
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
@@ -157,11 +172,46 @@ function ExerciseRow({
         <div className="exercise-name">
           <span className="name-line">
             {exercise.name}
-            {tag && <span className={`measure-tag ${measure}`}>{tag}</span>}
+            <button
+              type="button"
+              className={`measure-tag ${measure} adjustable${adjusting ? ' open' : ''}`}
+              aria-label={`Logged as ${ADJUST_LABEL[measure]} — tap to change`}
+              onClick={() => setAdjusting((v) => !v)}
+            >
+              {tag} ▾
+            </button>
           </span>
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
+      {adjusting && (
+        <div className="measure-adjust">
+          <span className="measure-adjust-label">Log as</span>
+          {options.map((opt) => (
+            <button
+              type="button"
+              key={opt}
+              className={`adjust-opt${measure === opt ? ' active' : ''}`}
+              onClick={() => {
+                onChange({ measure: opt })
+                setAdjusting(false)
+              }}
+            >
+              {ADJUST_LABEL[opt]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`adjust-opt reset${entry.measure == null ? ' active' : ''}`}
+            onClick={() => {
+              onChange({ measure: undefined })
+              setAdjusting(false)
+            }}
+          >
+            Auto
+          </button>
+        </div>
+      )}
       {setBased && (
         <div className="sets">
           {sets.map((s, i) => (

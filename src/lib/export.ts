@@ -1,5 +1,6 @@
 import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
+import { measureOf } from '../catalogue'
 import { effectiveSets, estimate1RM, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
@@ -20,10 +21,11 @@ const short = (block: Block) => block.short ?? block.title.toLowerCase()
 // prescribed is already carried by the done count, never as a fake actual.
 function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
   if (!exercise.sets) return entry ?? {}
+  const measure = entry?.measure ?? measureOf(exercise)
   const sets = effectiveSets(exercise, entry)
   const doneSets = sets.filter((s) => s.done)
   const e1rm = estimate1RM(sets)
-  const setsStr = doneSets.map(formatSet).filter(Boolean).join(', ')
+  const setsStr = doneSets.map((s) => formatSet(s, measure)).filter(Boolean).join(', ')
   return {
     done: isExerciseDone(exercise, entry),
     actual: (setsStr ? `${setsStr}${e1rm === null ? '' : ` (e1RM ${e1rm})`}` : '') || entry?.actual,

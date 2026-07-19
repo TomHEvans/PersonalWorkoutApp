@@ -382,20 +382,60 @@ select:focus {
 }
 .measure-tag {
   flex: none;
+  font-family: inherit;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
-  border: 1px solid var(--hair, #e3e7ed);
+  background: none;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 1px 7px;
-  line-height: 1.5;
+  padding: 2px 8px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.measure-tag:hover,
+.measure-tag.open {
+  border-color: var(--accent);
+  color: var(--text);
 }
 .measure-tag.band,
 .measure-tag.time {
-  color: #1e90a8;
-  border-color: #b7dfe8;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* per-exercise measurement adjuster */
+.measure-adjust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.measure-adjust-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.adjust-opt {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.adjust-opt.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+}
+.adjust-opt.reset {
+  color: var(--muted);
 }
 
 /* per-set rows: pre-loaded weight x reps, tick as you go */
