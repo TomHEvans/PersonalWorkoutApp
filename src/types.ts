@@ -76,6 +76,7 @@ export interface ExerciseLog {
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
+  swap?: string // catalogue exercise id actually performed, when deviating from the plan
   rpe?: number | null // 1-10
   note?: string
 }

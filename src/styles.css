@@ -438,6 +438,86 @@ select:focus {
   color: var(--muted);
 }
 
+/* exercise swap (log a different exercise than planned) */
+.swap-btn {
+  flex: none;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.swap-btn:hover,
+.swap-btn.open {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.swap-btn.swapped {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.swap-note {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+.swap-picker {
+  margin: 2px 0 8px;
+}
+.swap-search {
+  width: 100%;
+  margin-bottom: 6px;
+}
+.swap-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.swap-group {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 9px 12px 3px;
+}
+.swap-item {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: none;
+  border: 0;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.swap-item:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.swap-item.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+.swap-item.reset {
+  color: var(--muted);
+  font-style: italic;
+  border-bottom: 1px solid var(--border);
+}
+.swap-empty {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 /* per-set rows: pre-loaded weight x reps, tick as you go */
 
 .sets {

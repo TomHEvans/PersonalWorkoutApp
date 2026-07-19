@@ -213,3 +213,58 @@ export function measuresFor(exercise: Exercise): MeasureType[] {
 export function isCatalogued(exerciseId: string): boolean {
   return catalogueEntry(exerciseId) !== undefined
 }
+
+// ---------------------------------------------------------------------------
+// Browsable listing + slot-aware measure resolution (used by the in-app
+// exercise swap picker in BlockCard).
+// ---------------------------------------------------------------------------
+
+// Group labels for the picker, keyed by the FIRST id of each section of the
+// CATALOGUE object above (entries iterate in insertion order). Keep in sync
+// with the section comments when adding a new section.
+const GROUP_STARTS: Record<string, string> = {
+  'squat-main': 'Programme',
+  'front-squat': 'Strength & hybrid',
+  'back-squat': 'CrossFit barbell',
+  'wall-walk': 'Gymnastics',
+  'db-snatch': 'Dumbbell & kettlebell',
+  'echo-bike': 'Machines & carries',
+  'hyrox-ski': 'Hyrox',
+}
+
+export interface CatalogueListing extends CatalogueExercise {
+  id: string
+  group: string
+}
+
+export function allExercises(): CatalogueListing[] {
+  const out: CatalogueListing[] = []
+  let group = 'Exercises'
+  for (const [id, e] of Object.entries(CATALOGUE)) {
+    group = GROUP_STARTS[id] ?? group
+    out.push({ id, group, ...e })
+  }
+  return out
+}
+
+// Which measurement types a slot's structure can physically log: set-based
+// slots log per-set rows, free-text slots log a single actual.
+export const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
+export const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
+
+// The effective measurement for a slot, considering the log's in-app overrides:
+// explicit measure override > swapped exercise's default > plan/catalogue
+// default — each clamped to what the slot structure supports.
+export function resolveMeasure(
+  exercise: Exercise,
+  entry?: { measure?: MeasureType; swap?: string },
+): MeasureType {
+  const allowed = exercise.sets ? SET_MEASURES : FREE_MEASURES
+  if (entry?.measure && allowed.includes(entry.measure)) return entry.measure
+  if (entry?.swap) {
+    const m = catalogueEntry(entry.swap)?.measures.find((x) => allowed.includes(x))
+    if (m) return m
+  }
+  const planned = measureOf(exercise)
+  return allowed.includes(planned) ? planned : exercise.sets ? 'reps' : 'freeText'
+}

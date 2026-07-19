@@ -1,6 +1,6 @@
 import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
-import { measureOf } from '../catalogue'
+import { catalogueEntry, resolveMeasure } from '../catalogue'
 import { effectiveSets, estimate1RM, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
@@ -21,14 +21,17 @@ const short = (block: Block) => block.short ?? block.title.toLowerCase()
 // prescribed is already carried by the done count, never as a fake actual.
 function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
   if (!exercise.sets) return entry ?? {}
-  const measure = entry?.measure ?? measureOf(exercise)
+  const measure = resolveMeasure(exercise, entry)
   const sets = effectiveSets(exercise, entry)
   const doneSets = sets.filter((s) => s.done)
-  const e1rm = estimate1RM(sets)
+  // e1RM only means anything for weight-measured work (typed weights can
+  // linger after a switch to reps/band; don't export them as an e1RM).
+  const e1rm = measure === 'weightReps' ? estimate1RM(sets) : null
   const setsStr = doneSets.map((s) => formatSet(s, measure)).filter(Boolean).join(', ')
   return {
     done: isExerciseDone(exercise, entry),
     actual: (setsStr ? `${setsStr}${e1rm === null ? '' : ` (e1RM ${e1rm})`}` : '') || entry?.actual,
+    swap: entry?.swap,
     rpe: entry?.rpe,
     note: entry?.note,
   }
@@ -43,14 +46,25 @@ function exerciseDetail(name: string | null, e: ExerciseLog): string {
   return parts.join(' ')
 }
 
+// The label a detail line leads with. A swapped exercise always names what was
+// actually done ("devil press (was muscle-up)"), even in single-exercise
+// blocks where the block title normally suffices.
+function detailLabel(ex: Exercise, e: ExerciseLog, single: boolean): string | null {
+  if (e.swap) {
+    const swapName = (catalogueEntry(e.swap)?.name ?? e.swap).toLowerCase()
+    return `${swapName} (was ${ex.name.toLowerCase()})`
+  }
+  return single ? null : ex.name
+}
+
 function blockSegment(block: Block, log: WeekLog): string | null {
   const entries = block.exercises.map((ex) => ({ ex, log: exerciseView(ex, log.exercises[ex.id]) }))
-  const detailed = entries.filter((e) => e.log.actual || e.log.rpe != null || e.log.note)
+  const detailed = entries.filter((e) => e.log.actual || e.log.rpe != null || e.log.note || e.log.swap)
   const doneCount = entries.filter((e) => e.log.done).length
 
   if (detailed.length > 0) {
     const single = block.exercises.length === 1
-    const details = detailed.map((e) => exerciseDetail(single ? null : e.ex.name, e.log))
+    const details = detailed.map((e) => exerciseDetail(detailLabel(e.ex, e.log, single), e.log))
     const rest = entries.filter((e) => !detailed.includes(e))
     const suffix = rest.length > 0 && rest.every((e) => e.log.done) ? ', rest done' : ''
     return `${short(block)}: ${details.join(', ')}${suffix}`

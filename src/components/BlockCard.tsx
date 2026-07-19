@@ -2,7 +2,8 @@ import { useState } from 'react'
 import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
-import { measureOf } from '../catalogue'
+import { FREE_MEASURES, SET_MEASURES, allExercises, catalogueEntry, resolveMeasure } from '../catalogue'
+import type { CatalogueListing } from '../catalogue'
 import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
@@ -25,8 +26,6 @@ const ADJUST_LABEL: Record<MeasureType, string> = {
   time: 'Time',
   freeText: 'Note',
 }
-const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
-const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
 
 interface Props {
   placed: PlacedBlock
@@ -133,6 +132,72 @@ function SetRow({
   )
 }
 
+// Searchable catalogue picker for logging a different exercise than planned.
+// Set-based slots only offer movements that can log per-set rows (load/reps/
+// band); free-text slots can log anything as an actual, so they offer all.
+function SwapPicker({
+  exercise,
+  entry,
+  onPick,
+  onReset,
+}: {
+  exercise: Exercise
+  entry: ExerciseLog
+  onPick: (id: string) => void
+  onReset: () => void
+}) {
+  const [q, setQ] = useState('')
+  const setBased = Boolean(exercise.sets)
+  const query = q.trim().toLowerCase()
+
+  const groups: { group: string; items: CatalogueListing[] }[] = []
+  for (const item of allExercises()) {
+    if (setBased && !item.measures.some((m) => SET_MEASURES.includes(m))) continue
+    if (query) {
+      const hay = `${item.name} ${item.id} ${(item.aliases ?? []).join(' ')} ${item.group}`.toLowerCase()
+      if (!hay.includes(query)) continue
+    }
+    const last = groups[groups.length - 1]
+    if (last && last.group === item.group) last.items.push(item)
+    else groups.push({ group: item.group, items: [item] })
+  }
+
+  return (
+    <div className="swap-picker">
+      <input
+        className="swap-search"
+        placeholder="Search exercises…"
+        aria-label="Search exercises"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+      <div className="swap-list">
+        {entry.swap && (
+          <button type="button" className="swap-item reset" onClick={onReset}>
+            As programmed — {exercise.name}
+          </button>
+        )}
+        {groups.map((g) => (
+          <div key={g.group}>
+            <div className="swap-group">{g.group}</div>
+            {g.items.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className={`swap-item${entry.swap === item.id ? ' active' : ''}`}
+                onClick={() => onPick(item.id)}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        ))}
+        {groups.length === 0 && <div className="swap-empty">No matches</div>}
+      </div>
+    </div>
+  )
+}
+
 function ExerciseRow({
   exercise,
   entry,
@@ -143,12 +208,14 @@ function ExerciseRow({
   onChange: (patch: Partial<ExerciseLog>) => void
 }) {
   const [adjusting, setAdjusting] = useState(false)
+  const [swapping, setSwapping] = useState(false)
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
-  const measure = entry.measure ?? measureOf(exercise) // in-app override wins
+  const measure = resolveMeasure(exercise, entry) // override > swap default > plan
   const tag = MEASURE_LABEL[measure]
   const options = setBased ? SET_MEASURES : FREE_MEASURES
+  const displayName = entry.swap ? (catalogueEntry(entry.swap)?.name ?? entry.swap) : exercise.name
 
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
@@ -171,19 +238,50 @@ function ExerciseRow({
         </button>
         <div className="exercise-name">
           <span className="name-line">
-            {exercise.name}
+            {displayName}
             <button
               type="button"
               className={`measure-tag ${measure} adjustable${adjusting ? ' open' : ''}`}
               aria-label={`Logged as ${ADJUST_LABEL[measure]} — tap to change`}
-              onClick={() => setAdjusting((v) => !v)}
+              onClick={() => {
+                setAdjusting((v) => !v)
+                setSwapping(false)
+              }}
             >
               {tag} ▾
             </button>
+            <button
+              type="button"
+              className={`swap-btn${swapping ? ' open' : ''}${entry.swap ? ' swapped' : ''}`}
+              aria-label="Log a different exercise"
+              onClick={() => {
+                setSwapping((v) => !v)
+                setAdjusting(false)
+              }}
+            >
+              ⇄
+            </button>
           </span>
+          {entry.swap && <span className="swap-note">was: {exercise.name}</span>}
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
+      {swapping && (
+        <SwapPicker
+          exercise={exercise}
+          entry={entry}
+          onPick={(id) => {
+            // Adopt the picked exercise; clear the measure override so its
+            // catalogue default applies (adjustable again via "Log as").
+            onChange({ swap: id, measure: undefined })
+            setSwapping(false)
+          }}
+          onReset={() => {
+            onChange({ swap: undefined, measure: undefined })
+            setSwapping(false)
+          }}
+        />
+      )}
       {adjusting && (
         <div className="measure-adjust">
           <span className="measure-adjust-label">Log as</span>
@@ -225,6 +323,7 @@ function ExerciseRow({
             />
           ))}
           {(() => {
+            if (measure !== 'weightReps') return null // stale weights can linger after a type switch
             const e1rm = estimate1RM(sets)
             return e1rm === null ? null : <span className="e1rm">est. 1RM ~{e1rm} kg</span>
           })()}
