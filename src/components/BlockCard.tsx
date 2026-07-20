@@ -2,7 +2,8 @@ import { useState } from 'react'
 import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
-import { measureOf } from '../catalogue'
+import { FREE_MEASURES, SET_MEASURES, allExercises, catalogueEntry, resolveMeasure } from '../catalogue'
+import type { CatalogueListing } from '../catalogue'
 import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
@@ -12,21 +13,30 @@ const MEASURE_LABEL: Record<MeasureType, string> = {
   reps: 'reps',
   band: 'band',
   time: 'time',
+  cal: 'cal',
+  distance: 'dist',
   freeText: 'free',
 }
 
 // Adjuster labels + the options offered per exercise structure. A set-based
-// exercise can be logged as load / reps / band (all use the set rows); a
-// non-set exercise as time / note (both use the free-text actual).
+// exercise logs per-set rows (load / reps / band / time / cal / distance); a
+// non-set exercise logs a single actual (time / cal / distance / note).
 const ADJUST_LABEL: Record<MeasureType, string> = {
   weightReps: 'Load',
   reps: 'Reps',
   band: 'Band',
   time: 'Time',
+  cal: 'Cal',
+  distance: 'Dist',
   freeText: 'Note',
 }
-const SET_MEASURES: MeasureType[] = ['weightReps', 'reps', 'band']
-const FREE_MEASURES: MeasureType[] = ['time', 'freeText']
+
+// Placeholder for the free-text actual, per measurement.
+const ACTUAL_PLACEHOLDER: Partial<Record<MeasureType, string>> = {
+  time: 'time (e.g. 2:05/500m)',
+  cal: 'calories',
+  distance: 'distance (e.g. 200m)',
+}
 
 interface Props {
   placed: PlacedBlock
@@ -91,6 +101,7 @@ function SetRow({
 }) {
   const showWeight = measure === 'weightReps'
   const showBand = measure === 'band'
+  const showTime = measure === 'time' // time replaces the reps input entirely
   return (
     <div className={`set-row${set.done ? ' done' : ''}${showWeight || showBand ? '' : ' no-load'}`}>
       <button
@@ -121,14 +132,110 @@ function SetRow({
           <span className="set-x">×</span>
         </>
       )}
+      {measure === 'time' && (
+        <input
+          className="set-t"
+          placeholder={planned.r != null ? String(planned.r) : 'mm:ss'}
+          aria-label={`Set ${index + 1} time`}
+          value={set.t ?? ''}
+          onChange={(e) => onChange({ t: e.target.value })}
+        />
+      )}
+      {measure === 'cal' && (
+        <input
+          className="set-t"
+          inputMode="numeric"
+          placeholder="cal"
+          aria-label={`Set ${index + 1} calories`}
+          value={set.cal ?? ''}
+          onChange={(e) => onChange({ cal: sanitizeReps(e.target.value) })}
+        />
+      )}
+      {measure === 'distance' && (
+        <input
+          className="set-t"
+          placeholder="distance (e.g. 200m)"
+          aria-label={`Set ${index + 1} distance`}
+          value={set.dist ?? ''}
+          onChange={(e) => onChange({ dist: e.target.value })}
+        />
+      )}
+      {!showTime && measure !== 'cal' && measure !== 'distance' && (
+        <input
+          className="set-r"
+          inputMode="numeric"
+          placeholder={planned.r != null ? String(planned.r) : 'reps'}
+          aria-label={`Set ${index + 1} reps`}
+          value={set.r}
+          onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
+        />
+      )}
+    </div>
+  )
+}
+
+// Searchable catalogue picker for logging a different exercise than planned.
+// Set-based slots only offer movements that can log per-set rows (load/reps/
+// band/time); free-text slots can log anything as an actual, so they offer all.
+function SwapPicker({
+  exercise,
+  entry,
+  onPick,
+  onReset,
+}: {
+  exercise: Exercise
+  entry: ExerciseLog
+  onPick: (id: string) => void
+  onReset: () => void
+}) {
+  const [q, setQ] = useState('')
+  const setBased = Boolean(exercise.sets)
+  const query = q.trim().toLowerCase()
+
+  const groups: { group: string; items: CatalogueListing[] }[] = []
+  for (const item of allExercises()) {
+    if (setBased && !item.measures.some((m) => SET_MEASURES.includes(m))) continue
+    if (query) {
+      const hay = `${item.name} ${item.id} ${(item.aliases ?? []).join(' ')} ${item.group}`.toLowerCase()
+      if (!hay.includes(query)) continue
+    }
+    const last = groups[groups.length - 1]
+    if (last && last.group === item.group) last.items.push(item)
+    else groups.push({ group: item.group, items: [item] })
+  }
+
+  return (
+    <div className="swap-picker">
       <input
-        className="set-r"
-        inputMode="numeric"
-        placeholder={planned.r != null ? String(planned.r) : 'reps'}
-        aria-label={`Set ${index + 1} reps`}
-        value={set.r}
-        onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
+        className="swap-search"
+        placeholder="Search exercises…"
+        aria-label="Search exercises"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
       />
+      <div className="swap-list">
+        {entry.swap && (
+          <button type="button" className="swap-item reset" onClick={onReset}>
+            As programmed — {exercise.name}
+          </button>
+        )}
+        {groups.map((g) => (
+          <div key={g.group}>
+            <div className="swap-group">{g.group}</div>
+            {g.items.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className={`swap-item${entry.swap === item.id ? ' active' : ''}`}
+                onClick={() => onPick(item.id)}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        ))}
+        {groups.length === 0 && <div className="swap-empty">No matches</div>}
+      </div>
     </div>
   )
 }
@@ -143,12 +250,14 @@ function ExerciseRow({
   onChange: (patch: Partial<ExerciseLog>) => void
 }) {
   const [adjusting, setAdjusting] = useState(false)
+  const [swapping, setSwapping] = useState(false)
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
-  const measure = entry.measure ?? measureOf(exercise) // in-app override wins
+  const measure = resolveMeasure(exercise, entry) // override > swap default > plan
   const tag = MEASURE_LABEL[measure]
   const options = setBased ? SET_MEASURES : FREE_MEASURES
+  const displayName = entry.swap ? (catalogueEntry(entry.swap)?.name ?? entry.swap) : exercise.name
 
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
@@ -171,19 +280,50 @@ function ExerciseRow({
         </button>
         <div className="exercise-name">
           <span className="name-line">
-            {exercise.name}
+            {displayName}
             <button
               type="button"
               className={`measure-tag ${measure} adjustable${adjusting ? ' open' : ''}`}
               aria-label={`Logged as ${ADJUST_LABEL[measure]} — tap to change`}
-              onClick={() => setAdjusting((v) => !v)}
+              onClick={() => {
+                setAdjusting((v) => !v)
+                setSwapping(false)
+              }}
             >
               {tag} ▾
             </button>
+            <button
+              type="button"
+              className={`swap-btn${swapping ? ' open' : ''}${entry.swap ? ' swapped' : ''}`}
+              aria-label="Log a different exercise"
+              onClick={() => {
+                setSwapping((v) => !v)
+                setAdjusting(false)
+              }}
+            >
+              ⇄
+            </button>
           </span>
+          {entry.swap && <span className="swap-note">was: {exercise.name}</span>}
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
+      {swapping && (
+        <SwapPicker
+          exercise={exercise}
+          entry={entry}
+          onPick={(id) => {
+            // Adopt the picked exercise; clear the measure override so its
+            // catalogue default applies (adjustable again via "Log as").
+            onChange({ swap: id, measure: undefined })
+            setSwapping(false)
+          }}
+          onReset={() => {
+            onChange({ swap: undefined, measure: undefined })
+            setSwapping(false)
+          }}
+        />
+      )}
       {adjusting && (
         <div className="measure-adjust">
           <span className="measure-adjust-label">Log as</span>
@@ -225,6 +365,7 @@ function ExerciseRow({
             />
           ))}
           {(() => {
+            if (measure !== 'weightReps') return null // stale weights can linger after a type switch
             const e1rm = estimate1RM(sets)
             return e1rm === null ? null : <span className="e1rm">est. 1RM ~{e1rm} kg</span>
           })()}
@@ -234,7 +375,7 @@ function ExerciseRow({
         {!setBased && (
           <input
             className="actual"
-            placeholder={measure === 'time' ? 'time (e.g. 2:05/500m)' : 'actual'}
+            placeholder={ACTUAL_PLACEHOLDER[measure] ?? 'actual'}
             value={entry.actual ?? ''}
             onChange={(e) => onChange({ actual: e.target.value })}
           />

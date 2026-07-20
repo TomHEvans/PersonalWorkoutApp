@@ -19,9 +19,11 @@ export interface PlanSet {
 //   weightReps  per-set weight + reps (loaded lifts)
 //   reps        per-set reps only, bodyweight — the weight field is hidden
 //   band        per-set reps with a resistance band (band named in rx)
-//   time        a single timed / interval actual (mm:ss, pace)
+//   time        time per set on set-based work; a timed actual on free-text work
+//   cal         calories per set (ergs / bikes)
+//   distance    distance per set (carries, sleds, shuttles)
 //   freeText    a free-text actual (runs, mixed efforts)
-export type MeasureType = 'weightReps' | 'reps' | 'band' | 'time' | 'freeText'
+export type MeasureType = 'weightReps' | 'reps' | 'band' | 'time' | 'cal' | 'distance' | 'freeText'
 
 export interface Exercise {
   id: string // stable across weeks where the exercise recurs (press-main is always press-main)
@@ -68,6 +70,9 @@ export interface SetLog {
   w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
   r: string // reps actually done; empty until typed (plan value is placeholder only)
   band?: string // band colour used (band-measured exercises only; see src/lib/bands)
+  t?: string // time taken (time-measured sets; free format, e.g. "0:45" or "1min")
+  cal?: string // calories (cal-measured sets; numeric string)
+  dist?: string // distance (distance-measured sets; free format, e.g. "200m")
   done: boolean
 }
 
@@ -76,6 +81,7 @@ export interface ExerciseLog {
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
+  swap?: string // catalogue exercise id actually performed, when deviating from the plan
   rpe?: number | null // 1-10
   note?: string
 }

@@ -87,6 +87,21 @@ free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
 (1-10 stepper) and an optional **note**. Per day: a session note. Per week
 (Week tab): max unbroken DU and C2 pace/watts quick fields.
 
+Each exercise resolves a **measurement type** from the catalogue
+(`src/catalogue`): `weightReps` (kg × reps rows), `reps` (rep rows, no kg
+field), `band` (a per-set band-colour picker, `src/lib/bands.ts`), `time`
+(a time entry per set on set-based work, or the actual field on free-text
+work), `freeText` (the actual field). Two in-app overrides, both stored in the
+log so they sync across devices:
+
+- the **type tag** next to the name (e.g. `LOAD ▾`) opens **Log as** to switch
+  how the exercise is measured (Auto reverts to the catalogue default);
+- the **⇄ button** opens a searchable catalogue picker to log a **different
+  exercise than planned** (e.g. the plan said muscle-ups, you did devil press).
+  The slot adopts the picked exercise's name and default measure, shows
+  `was: <planned>`, and exports as what was actually done; **As programmed**
+  reverts. Set-based slots only offer movements that can log per-set rows.
+
 Block actions:
 
 - **Defer** removes the block from the week with a required reason. Deferred
@@ -121,7 +136,7 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
 ## Sync design
 
 - **Local-first**: every change writes to `localStorage` immediately under a
-  versioned key (`athx-log-v3:<weekId>`), then a debounced `PUT` to
+  versioned key (`athx-log-v5:<weekId>`), then a debounced `PUT` to
   `/api/log/:weekId` (KV allows ~1 write/sec per key).
 - **On load**: `GET` from KV, whole-record merge by `updatedAt`, last write
   wins (single user, acceptable).
@@ -129,11 +144,13 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
   when connectivity returns. The service worker keeps the app shell loading
   offline (PWA, installable).
 - **Versioning rule**: any structural change to the log shape bumps the
-  localStorage key version (`v1` → `v2` → `v3`) so stale state never merges
+  localStorage key version (`v1` → … → `v5`) so stale state never merges
   into new code. KV records are unversioned; v2-era records were repaired by
   the one-shot v2 → v3 migration (`src/lib/migrate.ts`) and rewritten clean.
-  The repair never runs on v3-era data — a typed `0` weight now legitimately
-  means bodyweight and is kept as logged.
+  The repair never runs on v3+ data — a typed `0` weight legitimately means
+  bodyweight and is kept as logged. `v4` added the per-set band colour and the
+  per-exercise measure override; `v5` added the exercise swap — both purely
+  additive, so those migrations just move the record forward.
 
 ## The log API
 
