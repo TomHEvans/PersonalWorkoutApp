@@ -4,6 +4,7 @@ import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
 import { FREE_MEASURES, SET_MEASURES, allExercises, catalogueEntry, resolveMeasure } from '../catalogue'
 import type { CatalogueListing } from '../catalogue'
+import { addedToExercise } from '../lib/added'
 import { BANDS, bandColor } from '../lib/bands'
 import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
@@ -46,6 +47,8 @@ interface Props {
   onDefer: (blockId: string, from: DayName, reason: string) => void
   onRestore: (blockId: string) => void
   onMove: (blockId: string, to: DayName | null) => void
+  onAddExercise: (blockId: string, exerciseId: string) => void
+  onRemoveAdded: (addedId: string) => void
 }
 
 function RpeStepper({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
@@ -174,27 +177,15 @@ function SetRow({
   )
 }
 
-// Searchable catalogue picker for logging a different exercise than planned.
-// Set-based slots only offer movements that can log per-set rows (load/reps/
-// band/time); free-text slots can log anything as an actual, so they offer all.
-function SwapPicker({
-  exercise,
-  entry,
-  onPick,
-  onReset,
-}: {
-  exercise: Exercise
-  entry: ExerciseLog
-  onPick: (id: string) => void
-  onReset: () => void
-}) {
+// Searchable catalogue picker used by a block's "+ Add exercise" line. The
+// added exercise brings its own structure (set rows per its default measure),
+// so every movement is offered.
+function CataloguePicker({ onPick }: { onPick: (id: string) => void }) {
   const [q, setQ] = useState('')
-  const setBased = Boolean(exercise.sets)
   const query = q.trim().toLowerCase()
 
   const groups: { group: string; items: CatalogueListing[] }[] = []
   for (const item of allExercises()) {
-    if (setBased && !item.measures.some((m) => SET_MEASURES.includes(m))) continue
     if (query) {
       const hay = `${item.name} ${item.id} ${(item.aliases ?? []).join(' ')} ${item.group}`.toLowerCase()
       if (!hay.includes(query)) continue
@@ -214,21 +205,11 @@ function SwapPicker({
         onChange={(e) => setQ(e.target.value)}
       />
       <div className="swap-list">
-        {entry.swap && (
-          <button type="button" className="swap-item reset" onClick={onReset}>
-            As programmed — {exercise.name}
-          </button>
-        )}
         {groups.map((g) => (
           <div key={g.group}>
             <div className="swap-group">{g.group}</div>
             {g.items.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className={`swap-item${entry.swap === item.id ? ' active' : ''}`}
-                onClick={() => onPick(item.id)}
-              >
+              <button type="button" key={item.id} className="swap-item" onClick={() => onPick(item.id)}>
                 {item.name}
               </button>
             ))}
@@ -244,13 +225,14 @@ function ExerciseRow({
   exercise,
   entry,
   onChange,
+  onRemove,
 }: {
   exercise: Exercise
   entry: ExerciseLog
   onChange: (patch: Partial<ExerciseLog>) => void
+  onRemove?: () => void // added-in-session exercises only
 }) {
   const [adjusting, setAdjusting] = useState(false)
-  const [swapping, setSwapping] = useState(false)
   const setBased = Boolean(exercise.sets)
   const sets = effectiveSets(exercise, entry)
   const done = isExerciseDone(exercise, entry)
@@ -285,45 +267,20 @@ function ExerciseRow({
               type="button"
               className={`measure-tag ${measure} adjustable${adjusting ? ' open' : ''}`}
               aria-label={`Logged as ${ADJUST_LABEL[measure]} — tap to change`}
-              onClick={() => {
-                setAdjusting((v) => !v)
-                setSwapping(false)
-              }}
+              onClick={() => setAdjusting((v) => !v)}
             >
               {tag} ▾
             </button>
-            <button
-              type="button"
-              className={`swap-btn${swapping ? ' open' : ''}${entry.swap ? ' swapped' : ''}`}
-              aria-label="Log a different exercise"
-              onClick={() => {
-                setSwapping((v) => !v)
-                setAdjusting(false)
-              }}
-            >
-              ⇄
-            </button>
+            {onRemove && (
+              <button type="button" className="remove-added" aria-label="Remove added exercise" onClick={onRemove}>
+                ✕
+              </button>
+            )}
           </span>
           {entry.swap && <span className="swap-note">was: {exercise.name}</span>}
           <span className="rx">{exercise.rx}</span>
         </div>
       </div>
-      {swapping && (
-        <SwapPicker
-          exercise={exercise}
-          entry={entry}
-          onPick={(id) => {
-            // Adopt the picked exercise; clear the measure override so its
-            // catalogue default applies (adjustable again via "Log as").
-            onChange({ swap: id, measure: undefined })
-            setSwapping(false)
-          }}
-          onReset={() => {
-            onChange({ swap: undefined, measure: undefined })
-            setSwapping(false)
-          }}
-        />
-      )}
       {adjusting && (
         <div className="measure-adjust">
           <span className="measure-adjust-label">Log as</span>
@@ -392,11 +349,23 @@ function ExerciseRow({
   )
 }
 
-export default function BlockCard({ placed, currentDay, log, onExercise, onDefer, onRestore, onMove }: Props) {
+export default function BlockCard({
+  placed,
+  currentDay,
+  log,
+  onExercise,
+  onDefer,
+  onRestore,
+  onMove,
+  onAddExercise,
+  onRemoveAdded,
+}: Props) {
   const { block, deferral, movedFrom, homeDay } = placed
   const [deferring, setDeferring] = useState(false)
   const [reason, setReason] = useState('')
   const [moving, setMoving] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const addedHere = log.added.filter((a) => a.blockId === block.id)
 
   if (deferral) {
     return (
@@ -405,7 +374,7 @@ export default function BlockCard({ placed, currentDay, log, onExercise, onDefer
           <span className={`prio p${block.priority}`}>P{block.priority}</span>
           <h3>{block.title}</h3>
         </div>
-        <p className="deferred-note">Deferred — {deferral.reason || 'no reason given'}</p>
+        <p className="deferred-note">Skipped — {deferral.reason || 'no reason given'}</p>
         <button type="button" className="btn small" onClick={() => onRestore(block.id)}>
           Restore
         </button>
@@ -429,7 +398,7 @@ export default function BlockCard({ placed, currentDay, log, onExercise, onDefer
             Move
           </button>
           <button type="button" className="btn tiny" onClick={() => (setDeferring(!deferring), setMoving(false))}>
-            Defer
+            Skip
           </button>
         </div>
       </div>
@@ -444,7 +413,7 @@ export default function BlockCard({ placed, currentDay, log, onExercise, onDefer
             autoFocus
           />
           <button type="button" className="btn small primary" onClick={confirmDefer}>
-            Defer
+            Skip
           </button>
           <button type="button" className="btn small" onClick={() => setDeferring(false)}>
             Cancel
@@ -478,6 +447,26 @@ export default function BlockCard({ placed, currentDay, log, onExercise, onDefer
           onChange={(patch) => onExercise(ex.id, patch)}
         />
       ))}
+      {addedHere.map((a) => (
+        <ExerciseRow
+          key={a.id}
+          exercise={addedToExercise(a)}
+          entry={log.exercises[a.id] ?? {}}
+          onChange={(patch) => onExercise(a.id, patch)}
+          onRemove={() => onRemoveAdded(a.id)}
+        />
+      ))}
+      <button type="button" className="add-line" onClick={() => setAdding((v) => !v)}>
+        {adding ? '✕ Cancel' : '+ Add exercise'}
+      </button>
+      {adding && (
+        <CataloguePicker
+          onPick={(id) => {
+            onAddExercise(block.id, id)
+            setAdding(false)
+          }}
+        />
+      )}
     </div>
   )
 }

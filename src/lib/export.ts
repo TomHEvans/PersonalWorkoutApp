@@ -1,6 +1,7 @@
 import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
 import { catalogueEntry, resolveMeasure } from '../catalogue'
+import { addedToExercise } from './added'
 import { effectiveSets, estimate1RM, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
@@ -58,10 +59,12 @@ function exerciseDetail(name: string | null, e: ExerciseLog): string {
   return parts.join(' ')
 }
 
-// The label a detail line leads with. A swapped exercise always names what was
-// actually done ("devil press (was muscle-up)"), even in single-exercise
-// blocks where the block title normally suffices.
-function detailLabel(ex: Exercise, e: ExerciseLog, single: boolean): string | null {
+// The label a detail line leads with. In-session additions always name
+// themselves ("devil press (added)"), as do legacy swapped slots
+// ("devil press (was muscle-up)"), even in single-exercise blocks where the
+// block title normally suffices.
+function detailLabel(ex: Exercise, e: ExerciseLog, single: boolean, added: boolean): string | null {
+  if (added) return `${ex.name.toLowerCase()} (added)`
   if (e.swap) {
     const swapName = (catalogueEntry(e.swap)?.name ?? e.swap).toLowerCase()
     return `${swapName} (was ${ex.name.toLowerCase()})`
@@ -70,13 +73,24 @@ function detailLabel(ex: Exercise, e: ExerciseLog, single: boolean): string | nu
 }
 
 function blockSegment(block: Block, log: WeekLog): string | null {
-  const entries = block.exercises.map((ex) => ({ ex, log: exerciseView(ex, log.exercises[ex.id]) }))
-  const detailed = entries.filter((e) => e.log.actual || e.log.rpe != null || e.log.note || e.log.swap)
+  const planned = block.exercises.map((ex) => ({ ex, added: false, log: exerciseView(ex, log.exercises[ex.id]) }))
+  const extras = log.added
+    .filter((a) => a.blockId === block.id)
+    .map((a) => {
+      const ex = addedToExercise(a)
+      return { ex, added: true, log: exerciseView(ex, log.exercises[a.id]) }
+    })
+  const entries = [...planned, ...extras]
+  // Additions surface as a detail line as soon as they're done, even with no
+  // typed values — "(added)" is itself the information.
+  const detailed = entries.filter(
+    (e) => e.log.actual || e.log.rpe != null || e.log.note || e.log.swap || (e.added && e.log.done),
+  )
   const doneCount = entries.filter((e) => e.log.done).length
 
   if (detailed.length > 0) {
-    const single = block.exercises.length === 1
-    const details = detailed.map((e) => exerciseDetail(detailLabel(e.ex, e.log, single), e.log))
+    const single = entries.length === 1
+    const details = detailed.map((e) => exerciseDetail(detailLabel(e.ex, e.log, single, e.added), e.log))
     const rest = entries.filter((e) => !detailed.includes(e))
     const suffix = rest.length > 0 && rest.every((e) => e.log.done) ? ', rest done' : ''
     return `${short(block)}: ${details.join(', ')}${suffix}`
@@ -114,7 +128,7 @@ export function buildExport(plan: WeekPlan, log: WeekLog): string {
     const title = findBlock(plan, d.blockId)?.block.title.toLowerCase() ?? d.blockId
     return `${title} (${d.from}, ${d.reason || 'no reason given'})`
   })
-  lines.push(`DEFERRED: ${deferred.length > 0 ? deferred.join('; ') : 'none'}`)
+  lines.push(`SKIPPED: ${deferred.length > 0 ? deferred.join('; ') : 'none'}`)
 
   if (log.maxDU != null) lines.push(`MAX DU FRESH: ${log.maxDU}`)
   if (log.c2) lines.push(`C2: ${log.c2}`)

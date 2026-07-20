@@ -524,6 +524,45 @@ select:focus {
   font-size: 0.68rem;
 }
 
+/* "+ Add exercise" line at the bottom of each block */
+.add-line {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--muted);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.add-line:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* remove button on added-in-session exercises */
+.remove-added {
+  flex: none;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.remove-added:hover {
+  color: #d6453d;
+  border-color: #d6453d;
+}
+
 /* per-set rows: pre-loaded weight x reps, tick as you go */
 
 .sets {

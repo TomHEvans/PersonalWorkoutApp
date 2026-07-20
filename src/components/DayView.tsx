@@ -10,10 +10,23 @@ interface Props {
   onDefer: (blockId: string, from: DayName, reason: string) => void
   onRestore: (blockId: string) => void
   onMove: (blockId: string, to: DayName | null) => void
+  onAddExercise: (blockId: string, exerciseId: string) => void
+  onRemoveAdded: (addedId: string) => void
   onSessionNote: (day: DayName, note: string) => void
 }
 
-export default function DayView({ plan, log, day, onExercise, onDefer, onRestore, onMove, onSessionNote }: Props) {
+export default function DayView({
+  plan,
+  log,
+  day,
+  onExercise,
+  onDefer,
+  onRestore,
+  onMove,
+  onAddExercise,
+  onRemoveAdded,
+  onSessionNote,
+}: Props) {
   const placed = blocksForDay(plan, log, day)
 
   return (
@@ -29,6 +42,8 @@ export default function DayView({ plan, log, day, onExercise, onDefer, onRestore
           onDefer={onDefer}
           onRestore={onRestore}
           onMove={onMove}
+          onAddExercise={onAddExercise}
+          onRemoveAdded={onRemoveAdded}
         />
       ))}
       <input

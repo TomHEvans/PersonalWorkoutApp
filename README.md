@@ -96,17 +96,20 @@ log so they sync across devices:
 
 - the **type tag** next to the name (e.g. `LOAD ▾`) opens **Log as** to switch
   how the exercise is measured (Auto reverts to the catalogue default);
-- the **⇄ button** opens a searchable catalogue picker to log a **different
-  exercise than planned** (e.g. the plan said muscle-ups, you did devil press).
-  The slot adopts the picked exercise's name and default measure, shows
-  `was: <planned>`, and exports as what was actually done; **As programmed**
-  reverts. Set-based slots only offer movements that can log per-set rows.
+- the **+ Add exercise** line at the bottom of each block opens a searchable
+  catalogue picker to log **extra work that wasn't planned** (did the class WOD
+  instead of the skill block? skip the block and add what you did). The
+  addition gets set rows from its catalogue type (lifts/reps/band ×3, timed
+  efforts ×1, runs a free-text actual), logs like any exercise, is removable
+  (✕), and exports as `<name> (added)`. (This replaced the earlier per-slot ⇄
+  swap; legacy swapped logs still render and export as `x (was y)`.)
 
 Block actions:
 
-- **Defer** removes the block from the week with a required reason. Deferred
-  blocks stay visible on their home day as placeholders (nothing lost
-  silently), appear at the top of the export, and can be restored.
+- **Skip** drops the block for this week, with a reason. Skipped blocks stay
+  visible on their home day as placeholders (nothing lost silently), appear in
+  the export's `SKIPPED` line, and can be restored. (Stored under the log's
+  `deferred` field for data compatibility.)
 - **Move** reshuffles a block to another weekday.
 
 "Compress week" judgment is never done in-app; that belongs to the planning
@@ -119,7 +122,7 @@ The Week tab builds a deterministic summary:
 ```
 WEEK EXPORT 2026-wk28 (6-10 July)
 STATE: Wendler C1W1 complete | BMU s1 | DU s1 | HSW s1 | T2B s1
-DEFERRED: clean and jerk (Thu, London trip)
+SKIPPED: clean and jerk (Thu, London trip)
 MAX DU FRESH: 34
 C2: 4x6min 2:05/500m
 Mon press: 52.5x7 @8 "strong" | shoulder physio done | BMU done
@@ -130,13 +133,13 @@ Day lines list blocks sorted by priority: a set-based exercise renders its
 completed sets plus the estimated 1RM when one is computable
 (`press: 40x5, 47.5x5, 52.5x7 (e1RM 64.5) @8`), a free-text exercise its
 actual, and a block that is just ticked renders `short done` (or `short 2/3
-done` when partial). Untouched blocks are omitted. `DEFERRED` is always
+done` when partial). Untouched blocks are omitted. `SKIPPED` is always
 present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
 
 ## Sync design
 
 - **Local-first**: every change writes to `localStorage` immediately under a
-  versioned key (`athx-log-v5:<weekId>`), then a debounced `PUT` to
+  versioned key (`athx-log-v6:<weekId>`), then a debounced `PUT` to
   `/api/log/:weekId` (KV allows ~1 write/sec per key).
 - **On load**: `GET` from KV, whole-record merge by `updatedAt`, last write
   wins (single user, acceptable).
@@ -144,12 +147,13 @@ present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
   when connectivity returns. The service worker keeps the app shell loading
   offline (PWA, installable).
 - **Versioning rule**: any structural change to the log shape bumps the
-  localStorage key version (`v1` → … → `v5`) so stale state never merges
+  localStorage key version (`v1` → … → `v6`) so stale state never merges
   into new code. KV records are unversioned; v2-era records were repaired by
   the one-shot v2 → v3 migration (`src/lib/migrate.ts`) and rewritten clean.
   The repair never runs on v3+ data — a typed `0` weight legitimately means
   bodyweight and is kept as logged. `v4` added the per-set band colour and the
-  per-exercise measure override; `v5` added the exercise swap — both purely
+  per-exercise measure override; `v5` the (since-retired) exercise swap and
+  per-set time/cal/distance; `v6` per-block added exercises — all purely
   additive, so those migrations just move the record forward.
 
 ## The log API
