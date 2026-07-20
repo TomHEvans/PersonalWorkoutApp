@@ -4,10 +4,12 @@
 //   3. point `currentWeekId` at it
 import wk28 from './2026-wk28.js'
 import wk29 from './2026-wk29.js'
+import wk30 from './2026-wk30.js'
 
 export const weeks = {
   [wk28.weekId]: wk28,
   [wk29.weekId]: wk29,
+  [wk30.weekId]: wk30,
 }
 
-export const currentWeekId = '2026-wk29'
+export const currentWeekId = '2026-wk30'
