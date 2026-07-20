@@ -49,8 +49,8 @@ export default function WeekPanel({ plan, log, onQuick, onRestore }: Props) {
       </section>
 
       <section>
-        <h3>Deferred</h3>
-        {log.deferred.length === 0 && <p className="muted">Nothing deferred.</p>}
+        <h3>Skipped</h3>
+        {log.deferred.length === 0 && <p className="muted">Nothing skipped.</p>}
         {log.deferred.map((d) => (
           <div key={d.blockId} className="deferred-row">
             <div>

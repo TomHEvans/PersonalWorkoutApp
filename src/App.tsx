@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { DayName, ExerciseLog, WeekLog } from './types'
 import { DAY_NAMES, currentWeekId, getPlan, todayName, weekIds } from './lib/plans'
+import { makeAdded } from './lib/added'
 import { getToken } from './lib/api'
 import { useLog } from './hooks/useLog'
 import TokenGate from './components/TokenGate'
@@ -46,6 +47,16 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
       return { ...prev, moves }
     })
 
+  const onAddExercise = (blockId: string, exerciseId: string) =>
+    update((prev) => ({ ...prev, added: [...prev.added, makeAdded(blockId, exerciseId)] }))
+
+  const onRemoveAdded = (addedId: string) =>
+    update((prev) => {
+      const exercises = { ...prev.exercises }
+      delete exercises[addedId]
+      return { ...prev, exercises, added: prev.added.filter((a) => a.id !== addedId) }
+    })
+
   const onSessionNote = (day: DayName, note: string) =>
     update((prev) => ({ ...prev, sessionNotes: { ...prev.sessionNotes, [day]: note } }))
 
@@ -82,6 +93,8 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
           onDefer={onDefer}
           onRestore={onRestore}
           onMove={onMove}
+          onAddExercise={onAddExercise}
+          onRemoveAdded={onRemoveAdded}
           onSessionNote={onSessionNote}
         />
       )}

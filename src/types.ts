@@ -81,9 +81,20 @@ export interface ExerciseLog {
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
-  swap?: string // catalogue exercise id actually performed, when deviating from the plan
+  swap?: string // legacy (v5-era): catalogue id logged in place of the plan's. The swap UI
+  // was replaced by added exercises; old records still render/export correctly.
   rpe?: number | null // 1-10
   note?: string
+}
+
+// An exercise added in-session (not in the plan): "did extra work" rather than
+// editing the plan. Lives in the log, renders inside its block, logs like any
+// other exercise under its own id, and exports as "<name> (added)".
+export interface AddedExercise {
+  id: string // unique within the week; the ExerciseLog key for this addition
+  blockId: string // block it was added under
+  exerciseId: string // catalogue id it was created from (name + default measure)
+  sets?: number // set-row count; absent -> free-text actual (runs etc.)
 }
 
 export interface Deferral {
@@ -95,8 +106,9 @@ export interface Deferral {
 export interface WeekLog {
   exercises: Record<string, ExerciseLog>
   sessionNotes: Partial<Record<DayName, string>>
-  deferred: Deferral[]
+  deferred: Deferral[] // "skipped" in the UI; field name kept for data compat
   moves: Record<string, DayName> // blockId -> day it was reshuffled to
+  added: AddedExercise[] // in-session additions, per block
   maxDU: number | null // weekly max unbroken double-unders
   c2: string // C2 interval pace/watts quick field
   updatedAt: number
