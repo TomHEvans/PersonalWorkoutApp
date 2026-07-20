@@ -16,6 +16,25 @@ export const sanitizeWeight = (raw: string): string => {
 
 export const sanitizeReps = (raw: string): string => raw.replace(/[^0-9]/g, '')
 
+// Commit-time coercion: what a set field actually STORES. The sanitizers keep
+// live typing clean; these run when a field is committed (input blur) and on
+// every record read (normalize), coercing the value to a canonical number
+// rendered as a string — "07" -> "7", "112." -> "112" — per the SetLog
+// contract. Anything that is not entirely a number (legacy junk like "77kg"
+// or a pre-loaded rep scheme like "8-12" from records written by old app
+// versions) is dropped to empty rather than kept or merged, so a garbled
+// value can never sit in an input or feed the e1RM.
+export const coerceWeight = (raw: string): string => {
+  const t = raw.trim()
+  const n = /^[0-9.]+$/.test(t) ? Number(t) : NaN
+  return Number.isFinite(n) ? String(n) : ''
+}
+
+export const coerceReps = (raw: string): string => {
+  const t = raw.trim()
+  return /^[0-9]+$/.test(t) ? String(Number(t)) : ''
+}
+
 // The set rows shown (and exported) for a set-based exercise: logged rows
 // where they exist, otherwise empty rows. Rows start empty — the programmed
 // values appear only as input placeholders — so a stored value always means

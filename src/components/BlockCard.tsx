@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FocusEvent } from 'react'
 import type { DayName, Exercise, ExerciseLog, MeasureType, PlanSet, SetLog, WeekLog } from '../types'
 import type { PlacedBlock } from '../lib/plans'
 import { DAY_NAMES } from '../lib/plans'
@@ -6,7 +6,7 @@ import { FREE_MEASURES, SET_MEASURES, allExercises, catalogueEntry, resolveMeasu
 import type { CatalogueListing } from '../catalogue'
 import { addedToExercise } from '../lib/added'
 import { BANDS, bandColor } from '../lib/bands'
-import { effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
+import { coerceReps, coerceWeight, effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
 // Compact clarity tag next to the exercise name; tapping it opens the adjuster.
 const MEASURE_LABEL: Record<MeasureType, string> = {
@@ -89,6 +89,16 @@ function BandSelect({ index, value, onChange }: { index: number; value: string; 
 // The programmed values are placeholders only — the inputs start empty, so
 // a logged value always comes from typing (pre-loading them as values let
 // mobile keyboards append to the default, corrupting weights and reps).
+// When a field DOES hold a value (typed earlier, or synced back from KV),
+// focusing selects it so the first keystroke replaces it — a mobile cursor
+// otherwise lands at the end and typing appends ("14" + "7" -> "147").
+// Blur coerces the field to a clean number (or empty) before it stays stored.
+const selectOnFocus = (e: FocusEvent<HTMLInputElement>) => {
+  const el = e.currentTarget
+  // rAF: iOS Safari can undo a select() made synchronously inside focus.
+  requestAnimationFrame(() => el.select())
+}
+
 function SetRow({
   index,
   planned,
@@ -124,7 +134,9 @@ function SetRow({
             placeholder={planned.w != null ? String(planned.w) : 'kg'}
             aria-label={`Set ${index + 1} weight`}
             value={set.w}
+            onFocus={selectOnFocus}
             onChange={(e) => onChange({ w: sanitizeWeight(e.target.value) })}
+            onBlur={() => coerceWeight(set.w) !== set.w && onChange({ w: coerceWeight(set.w) })}
           />
           <span className="set-x">×</span>
         </>
@@ -151,7 +163,9 @@ function SetRow({
           placeholder="cal"
           aria-label={`Set ${index + 1} calories`}
           value={set.cal ?? ''}
+          onFocus={selectOnFocus}
           onChange={(e) => onChange({ cal: sanitizeReps(e.target.value) })}
+          onBlur={() => coerceReps(set.cal ?? '') !== (set.cal ?? '') && onChange({ cal: coerceReps(set.cal ?? '') })}
         />
       )}
       {measure === 'distance' && (
@@ -170,7 +184,9 @@ function SetRow({
           placeholder={planned.r != null ? String(planned.r) : 'reps'}
           aria-label={`Set ${index + 1} reps`}
           value={set.r}
+          onFocus={selectOnFocus}
           onChange={(e) => onChange({ r: sanitizeReps(e.target.value) })}
+          onBlur={() => coerceReps(set.r) !== set.r && onChange({ r: coerceReps(set.r) })}
         />
       )}
     </div>

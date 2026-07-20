@@ -65,8 +65,10 @@ export interface WeekPlan {
 // ---------------------------------------------------------------------------
 
 export interface SetLog {
-  // Stored as a string, but the input sanitizers (sanitizeWeight/sanitizeReps)
-  // keep it a clean numeric string or empty, so every reader can Number() it.
+  // Stored as a string, but always a clean coerced number or empty: the input
+  // sanitizers keep typing numeric, blur coerces the committed value
+  // (coerceWeight/coerceReps), and normalize() re-applies the coercion to
+  // every record read, so every reader can Number() it safely.
   w: string // weight actually lifted (kg); empty until typed (plan value is placeholder only)
   r: string // reps actually done; empty until typed (plan value is placeholder only)
   band?: string // band colour used (band-measured exercises only; see src/lib/bands)

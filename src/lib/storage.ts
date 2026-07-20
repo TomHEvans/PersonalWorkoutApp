@@ -6,7 +6,8 @@ import { repairLog } from './migrate'
 // localStorage is the local-first copy: every change lands here immediately,
 // the KV PUT follows debounced. Any structural change to the log shape bumps
 // this version (v1 -> ... -> v5) so stale state never merges into new code.
-const VERSION = 'athx-log-v6' // v6: per-block added exercises
+const VERSION = 'athx-log-v7' // v7: set values stored as coerced clean numbers; corrupted legacy values dropped
+const V6 = 'athx-log-v6' // v6: per-block added exercises
 const V5 = 'athx-log-v5' // v5: per-exercise swap override + per-set time/cal/dist
 const V4 = 'athx-log-v4' // v4: per-set band colour + per-exercise measure override
 const V3 = 'athx-log-v3' // v3: set rows start empty; programming is placeholder only
@@ -24,11 +25,12 @@ export function readLocal(weekId: string): WeekLog | null {
   }
 }
 
-// One-shot migration to the current version. v5/v4/v3 -> v6 are purely
-// additive (the new fields are simply absent on old records) so they just move
-// the record; v2 also repairs the pre-loaded/concatenated set values first.
+// One-shot migration to the current version. v6/v5/v4/v3 -> v7 move the
+// record through normalize(), which now also scrubs set values to the coerced
+// clean-number contract; v2 additionally gets the plan-aware repair for the
+// pre-loaded/concatenated values first.
 function migrateLegacy(weekId: string): WeekLog | null {
-  for (const from of [V5, V4, V3]) {
+  for (const from of [V6, V5, V4, V3]) {
     const raw = localStorage.getItem(`${from}:${weekId}`)
     if (raw) return promote(weekId, normalize(JSON.parse(raw)), from)
   }
