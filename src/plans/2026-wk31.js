@@ -23,11 +23,19 @@
 // carry dormant reminders — the UI tabs and export cover Mon-Fri only).
 // Doing the Thu run satisfies the flexible run.
 //
+// Physio runs ONCE WEEKLY this week, on Wed after the metcon: the full knee
+// programme (bosu squat, plyo drop jumps + line jumps, TRX squat, step-downs,
+// SL hip extension, Copenhagen, leg press 60 kg, SL knee extension 14 kg,
+// crab walks, rope skipping 4x90s) plus the shoulder programme (cable ER,
+// scap retraction). Monday is upper + bike only — no physio, no leg work.
+//
 // ID note: recurring exercises keep their stable ids (press-main, squat-main,
-// dl-main, c2b, du, hsw-walk, c2-intervals, power-clean, pull-up, dip). New
-// movements this week get fresh catalogue-backed ids: mu-transition,
-// bulgarian-split-squat, hanging-knee-raise, plus free-text metcon-amrap,
-// row-run-30 and physio-full.
+// dl-main, c2b, du, hsw-walk, c2-intervals, power-clean, pull-up, dip, and
+// the physio ids dj-two-foot, dj-single, line-jumps, trx-squat, step-down,
+// hip-thrust, copenhagen, leg-press, knee-ext, crab-walk, skip, cable-er,
+// scap). New movements this week get fresh catalogue-backed ids:
+// mu-transition, bulgarian-split-squat, hanging-knee-raise, bosu-squat, plus
+// free-text metcon-amrap and row-run-30.
 export default {
   weekId: '2026-wk31',
   label: '27 July - 2 August',
@@ -35,7 +43,7 @@ export default {
   stages:
     'C2W1 5s week (TMs held 63/126/171) | DL rejoins the wave (wk30 deferral superseded) | C2 threshold 3x4min Mon | MU transitions | Thu/Fri contingent on travel | flex 7.5km run Thu-Sun',
   notes:
-    'C2W1 (5s week), TMs held at C1 values — cycle 1 was never completed. Mon is upper + bike threshold, NO leg work. Thu and Fri only if not travelling (Skip with reason if away). 7.5km easy run flexible Thu-Sun; Thu run satisfies it.',
+    'C2W1 (5s week), TMs held at C1 values — cycle 1 was never completed. Mon is upper + bike threshold, NO leg work and no physio. Physio once weekly on Wed: full knee programme + shoulder programme. Thu and Fri only if not travelling (Skip with reason if away). 7.5km easy run flexible Thu-Sun; Thu run satisfies it.',
   days: [
     {
       day: 'Mon',
@@ -99,19 +107,6 @@ export default {
               id: 'c2-intervals',
               name: 'Bike intervals',
               rx: '3 x 4 min at threshold effort, 3 min easy between. Log pace/watts',
-            },
-          ],
-        },
-        {
-          id: 'physio',
-          title: 'Physio exercises',
-          short: 'physio',
-          priority: 1,
-          exercises: [
-            {
-              id: 'physio-full',
-              name: 'Physio exercises (full list)',
-              rx: 'Full list, once through',
             },
           ],
         },
@@ -217,6 +212,93 @@ export default {
               name: '10 min AMRAP',
               rx: '10 DB ground-to-overhead, 12 DB walking lunges, 6 burpee broad jumps. Log rounds+reps (e.g. 4+12)',
             },
+          ],
+        },
+        {
+          id: 'knee-physio',
+          title: 'Knee physio (once weekly, full programme)',
+          short: 'knee physio',
+          priority: 1,
+          exercises: [
+            { id: 'bosu-squat', name: 'Squat on Bosu', rx: '2x8', sets: [{ r: 8 }, { r: 8 }] },
+            {
+              id: 'dj-two-foot',
+              name: 'Drop jump two-foot land',
+              rx: '2x6, two-foot land and jump',
+              sets: [{ r: 6 }, { r: 6 }],
+            },
+            {
+              id: 'dj-single',
+              name: 'Drop jump single-leg land and hold',
+              rx: '3x3, hands off, hold the landing',
+              sets: [{ r: 3 }, { r: 3 }, { r: 3 }],
+            },
+            { id: 'line-jumps', name: 'Forward line jumps', rx: '2x10', sets: [{ r: 10 }, { r: 10 }] },
+            { id: 'trx-squat', name: 'TRX squat', rx: '3x8', sets: [{ r: 8 }, { r: 8 }, { r: 8 }] },
+            {
+              id: 'step-down',
+              name: 'Lateral step down heel tap',
+              rx: '2x5 per side',
+              sets: [{ r: '5/side' }, { r: '5/side' }],
+            },
+            {
+              id: 'hip-thrust',
+              name: 'Single-leg barbell hip extension',
+              rx: '3x8 per side',
+              sets: [{ r: '8/side' }, { r: '8/side' }, { r: '8/side' }],
+            },
+            {
+              id: 'copenhagen',
+              name: 'Copenhagen hip adduction',
+              rx: 'As prescribed in the physio app',
+            },
+            {
+              id: 'leg-press',
+              name: 'Leg press',
+              rx: '3x12 @ 60 kg',
+              sets: [
+                { w: 60, r: 12 },
+                { w: 60, r: 12 },
+                { w: 60, r: 12 },
+              ],
+            },
+            {
+              id: 'knee-ext',
+              name: 'Knee extension single leg',
+              rx: '3x8 @ 14 kg per leg. Machine 90-40° only',
+              sets: [
+                { w: 14, r: 8 },
+                { w: 14, r: 8 },
+                { w: 14, r: 8 },
+              ],
+            },
+            {
+              id: 'crab-walk',
+              name: 'Resisted crab walks',
+              rx: '3x12',
+              sets: [{ r: 12 }, { r: 12 }, { r: 12 }],
+            },
+            {
+              id: 'skip',
+              name: 'Rope skipping',
+              rx: '4 x 90 seconds',
+              sets: [{ r: '90s' }, { r: '90s' }, { r: '90s' }, { r: '90s' }],
+            },
+          ],
+        },
+        {
+          id: 'sh-physio',
+          title: 'Shoulder physio',
+          short: 'shoulder physio',
+          priority: 1,
+          exercises: [
+            {
+              id: 'cable-er',
+              name: 'Cable external rotation',
+              rx: '3x8-12, glenohumeral external rotation on the cable machine',
+              sets: [{ r: '8-12' }, { r: '8-12' }, { r: '8-12' }],
+            },
+            { id: 'scap', name: 'Scapular retraction', rx: '4x5', sets: [{ r: 5 }, { r: 5 }, { r: 5 }, { r: 5 }] },
           ],
         },
       ],
