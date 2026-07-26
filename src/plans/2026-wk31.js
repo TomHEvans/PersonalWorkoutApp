@@ -23,19 +23,20 @@
 // carry dormant reminders — the UI tabs and export cover Mon-Fri only).
 // Doing the Thu run satisfies the flexible run.
 //
-// Physio runs ONCE WEEKLY this week, on Wed after the metcon: the full knee
-// programme (bosu squat, plyo drop jumps + line jumps, TRX squat, step-downs,
-// SL hip extension, Copenhagen, leg press 60 kg, SL knee extension 14 kg,
-// crab walks, rope skipping 4x90s) plus the shoulder programme (cable ER,
-// scap retraction). Monday is upper + bike only — no physio, no leg work.
+// Physio placement this week: shoulder rehab (cable ER, scap retraction) is
+// Monday's WARM-UP; banded crab walks are Tuesday's warm-up; the knee
+// programme runs once weekly on Wed after the metcon (plyo drop jumps + line
+// jumps, TRX squat, step-downs, SL hip extension, Copenhagen, leg press
+// 60 kg, SL knee extension 14 kg, rope skipping 4x90s — no Bosu work this
+// week). Monday remains strictly no-leg-work.
 //
 // ID note: recurring exercises keep their stable ids (press-main, squat-main,
 // dl-main, c2b, du, hsw-walk, c2-intervals, power-clean, pull-up, dip, and
 // the physio ids dj-two-foot, dj-single, line-jumps, trx-squat, step-down,
 // hip-thrust, copenhagen, leg-press, knee-ext, crab-walk, skip, cable-er,
 // scap). New movements this week get fresh catalogue-backed ids:
-// mu-transition, bulgarian-split-squat, hanging-knee-raise, bosu-squat, plus
-// free-text metcon-amrap and row-run-30.
+// mu-transition, bulgarian-split-squat, hanging-knee-raise,
+// straight-arm-pulldown, plus free-text metcon-amrap and row-run-30.
 export default {
   weekId: '2026-wk31',
   label: '27 July - 2 August',
@@ -43,11 +44,26 @@ export default {
   stages:
     'C2W1 5s week (TMs held 63/126/171) | DL rejoins the wave (wk30 deferral superseded) | C2 threshold 3x4min Mon | MU transitions | Thu/Fri contingent on travel | flex 7.5km run Thu-Sun',
   notes:
-    'C2W1 (5s week), TMs held at C1 values — cycle 1 was never completed. Mon is upper + bike threshold, NO leg work and no physio. Physio once weekly on Wed: full knee programme + shoulder programme. Thu and Fri only if not travelling (Skip with reason if away). 7.5km easy run flexible Thu-Sun; Thu run satisfies it.',
+    'C2W1 (5s week), TMs held at C1 values — cycle 1 was never completed. Mon is upper + bike threshold with a shoulder-rehab warm-up, NO leg work. Tue warms up with banded crab walks. Knee physio once weekly on Wed (no Bosu this week). Thu and Fri only if not travelling (Skip with reason if away). 7.5km easy run flexible Thu-Sun; Thu run satisfies it.',
   days: [
     {
       day: 'Mon',
       blocks: [
+        {
+          id: 'sh-physio',
+          title: 'Warm-up — shoulder rehab',
+          short: 'shoulder rehab',
+          priority: 1,
+          exercises: [
+            {
+              id: 'cable-er',
+              name: 'Cable external rotation',
+              rx: '3x8-12, glenohumeral external rotation on the cable machine',
+              sets: [{ r: '8-12' }, { r: '8-12' }, { r: '8-12' }],
+            },
+            { id: 'scap', name: 'Scapular retraction', rx: '4x5', sets: [{ r: 5 }, { r: 5 }, { r: 5 }, { r: 5 }] },
+          ],
+        },
         {
           id: 'mu-practice',
           title: 'Muscle-up practice (first, fresh)',
@@ -95,6 +111,12 @@ export default {
           exercises: [
             { id: 'pull-up', name: 'Strict pull-up', rx: '4x6', sets: [{ r: 6 }, { r: 6 }, { r: 6 }, { r: 6 }] },
             { id: 'dip', name: 'Strict dip', rx: '3x8', sets: [{ r: 8 }, { r: 8 }, { r: 8 }] },
+            {
+              id: 'straight-arm-pulldown',
+              name: 'Straight-arm pulldown',
+              rx: '3x12, moderate weight — muscle-up accessory',
+              sets: [{ r: 12 }, { r: 12 }, { r: 12 }],
+            },
           ],
         },
         {
@@ -115,6 +137,20 @@ export default {
     {
       day: 'Tue',
       blocks: [
+        {
+          id: 'tue-warmup',
+          title: 'Warm-up — banded crab walks',
+          short: 'warm-up',
+          priority: 1,
+          exercises: [
+            {
+              id: 'crab-walk',
+              name: 'Banded crab walks',
+              rx: '3x12, warm-up',
+              sets: [{ r: 12 }, { r: 12 }, { r: 12 }],
+            },
+          ],
+        },
         {
           id: 'du-emom',
           title: 'Double unders — EMOM (first)',
@@ -220,7 +256,6 @@ export default {
           short: 'knee physio',
           priority: 1,
           exercises: [
-            { id: 'bosu-squat', name: 'Squat on Bosu', rx: '2x8', sets: [{ r: 8 }, { r: 8 }] },
             {
               id: 'dj-two-foot',
               name: 'Drop jump two-foot land',
@@ -273,32 +308,11 @@ export default {
               ],
             },
             {
-              id: 'crab-walk',
-              name: 'Resisted crab walks',
-              rx: '3x12',
-              sets: [{ r: 12 }, { r: 12 }, { r: 12 }],
-            },
-            {
               id: 'skip',
               name: 'Rope skipping',
               rx: '4 x 90 seconds',
               sets: [{ r: '90s' }, { r: '90s' }, { r: '90s' }, { r: '90s' }],
             },
-          ],
-        },
-        {
-          id: 'sh-physio',
-          title: 'Shoulder physio',
-          short: 'shoulder physio',
-          priority: 1,
-          exercises: [
-            {
-              id: 'cable-er',
-              name: 'Cable external rotation',
-              rx: '3x8-12, glenohumeral external rotation on the cable machine',
-              sets: [{ r: '8-12' }, { r: '8-12' }, { r: '8-12' }],
-            },
-            { id: 'scap', name: 'Scapular retraction', rx: '4x5', sets: [{ r: 5 }, { r: 5 }, { r: 5 }, { r: 5 }] },
           ],
         },
       ],

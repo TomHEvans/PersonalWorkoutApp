@@ -63,6 +63,7 @@ const CATALOGUE: Record<string, CatalogueExercise> = {
   'bulgarian-split-squat': { name: 'Bulgarian split squat', measures: ['reps', 'weightReps'], aliases: ['BSS'] },
   'hanging-knee-raise': { name: 'Hanging knee raise', measures: ['reps'] },
   'bosu-squat': { name: 'Bosu squat', measures: ['reps'] },
+  'straight-arm-pulldown': { name: 'Straight-arm pulldown', measures: ['weightReps', 'reps'] },
   'clean': { name: 'Clean', measures: ['reps', 'weightReps'] },
   'power-clean': { name: 'Power clean', measures: ['reps', 'weightReps'] },
   'snatch': { name: 'Snatch', measures: ['reps', 'weightReps'] },
