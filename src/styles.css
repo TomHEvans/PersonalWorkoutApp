@@ -33,7 +33,8 @@ body {
 .app {
   max-width: 640px;
   margin: 0 auto;
-  padding: env(safe-area-inset-top) 12px calc(24px + env(safe-area-inset-bottom));
+  /* bottom padding clears the fixed section bar */
+  padding: env(safe-area-inset-top) 12px calc(84px + env(safe-area-inset-bottom));
 }
 
 button {
@@ -196,12 +197,12 @@ select:focus {
   background: var(--err);
 }
 
-/* ---- day tabs ---- */
+/* ---- day tabs (Mon-Sun) ---- */
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
   margin: 4px 0 14px;
 }
 
@@ -210,8 +211,15 @@ select:focus {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 0;
+  font-size: 0.85rem;
   color: var(--muted);
   position: relative;
+}
+
+/* Sat/Sun sit slightly back from the working week, so the shape of the week
+   reads at a glance without the weekend feeling second-class. */
+.tab.weekend:not(.active) {
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
 }
 
 .tab.active {
@@ -231,6 +239,46 @@ select:focus {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+/* ---- section bar (bottom) ---- */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+}
+
+.tabbar-inner {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.tabbar-btn {
+  flex: 1 1 0;
+  max-width: 180px;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.tabbar-btn.active {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* ---- blocks ---- */

@@ -15,7 +15,8 @@ back into next week's planning chat.
 
 ## Weekly workflow loop
 
-1. Sunday: screenshot Runna, tap **Copy week summary** in the app (Week tab).
+1. Sunday: screenshot Runna, tap **Copy week summary** in the app (**Week**
+   section, bottom bar).
 2. New chat in the planning Project: attach screenshot, paste export.
 3. The chat drafts the week; approve or adjust.
 4. It outputs a Claude Code prompt: *"create `src/plans/2026-wk29.js` with this
@@ -40,7 +41,7 @@ export default {
   stages: 'BMU s1 | DU s1 | HSW s1 | T2B s1', // optional; echoed into the STATE line
   days: [
     {
-      day: 'Mon', // Mon-Fri
+      day: 'Mon', // Mon-Sun; omit days with nothing planned
       blocks: [
         {
           id: 'press',              // stable id
@@ -74,6 +75,19 @@ export default {
 **Rules:** exercise ids stay stable across weeks where the exercise recurs
 (`press-main` is always `press-main`), so history queries stay trivial later.
 
+## Navigation
+
+Two levels, both thumb-reachable:
+
+- **Bottom bar** — the app's top-level **sections**: **Train** (log a day) and
+  **Week** (quick fields, skipped blocks, the export). This is the expansion
+  point: a new section is an entry in `SECTIONS`
+  ([`src/components/TabBar.tsx`](src/components/TabBar.tsx)) plus its panel in
+  the section switch in [`src/App.tsx`](src/App.tsx).
+- **Day tabs** (inside Train) — **Mon–Sun**, the full week. Today carries a dot,
+  Sat/Sun sit on a slightly recessed surface so the shape of the week reads at a
+  glance. The selected day survives a trip to the Week section and back.
+
 ## Logging model
 
 Set-based exercises (those with `sets` in the plan) show one row per set —
@@ -85,7 +99,7 @@ completed set — the AMRAP top set in a 5/3/1 week) inline under the sets.
 Exercises without programmed sets keep a single **done** toggle and a
 free-text **actual** (e.g. `7.5km 42:10`). Every exercise also has **RPE**
 (1-10 stepper) and an optional **note**. Per day: a session note. Per week
-(Week tab): max unbroken DU and C2 pace/watts quick fields.
+(Week section): max unbroken DU and C2 pace/watts quick fields.
 
 Each exercise resolves a **measurement type** from the catalogue
 (`src/catalogue`): `weightReps` (kg × reps rows), `reps` (rep rows, no kg
@@ -110,14 +124,14 @@ Block actions:
   visible on their home day as placeholders (nothing lost silently), appear in
   the export's `SKIPPED` line, and can be restored. (Stored under the log's
   `deferred` field for data compatibility.)
-- **Move** reshuffles a block to another weekday.
+- **Move** reshuffles a block to any other day of the week, weekend included.
 
 "Compress week" judgment is never done in-app; that belongs to the planning
 chat where the fatigue rules live.
 
 ## The week export (the contract with the planning chat)
 
-The Week tab builds a deterministic summary:
+The Week section builds a deterministic summary:
 
 ```
 WEEK EXPORT 2026-wk28 (6-10 July)
@@ -129,7 +143,7 @@ Mon press: 52.5x7 @8 "strong" | shoulder physio done | BMU done
 NOTES: slept badly (Mon)
 ```
 
-Day lines list blocks sorted by priority: a set-based exercise renders its
+Day lines run Mon–Sun and list blocks sorted by priority: a set-based exercise renders its
 completed sets plus the estimated 1RM when one is computable
 (`press: 40x5, 47.5x5, 52.5x7 (e1RM 64.5) @8`), a free-text exercise its
 actual, and a block that is just ticked renders `short done` (or `short 2/3
@@ -239,11 +253,11 @@ npm run typecheck
 src/plans/index.js             registry: weekId -> module, exports currentWeekId
 src/plans/2026-wk28.js         one plain-JS module per training week
 src/types.ts                   plan + log shapes
-src/lib/plans.ts               typed plan access, day layout (moves/deferrals)
+src/lib/plans.ts               typed plan access, Mon-Sun days, day layout (moves/deferrals)
 src/lib/export.ts              the week-summary text builder
 src/lib/{api,storage,log}.ts   KV client, localStorage mirror, merge rules
 src/hooks/useLog.ts            local-first state + debounced sync
-src/components/                gate, header, day view, block card, week panel
+src/components/                gate, header, day view, block card, week panel, section bar
 worker/index.ts                Worker entry: /api + static assets + SPA fallback
 server/logApi.ts               shared log API logic (KV + token check)
 functions/api/log/[weekId].ts  Pages Function adapter (optional)

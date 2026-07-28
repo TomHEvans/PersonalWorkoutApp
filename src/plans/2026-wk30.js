@@ -28,8 +28,8 @@
 // and BMU session 2 after the easy run. BMU stage rule: two turnover-fault-
 // free sessions clears to stage 2.
 //
-// Sat/Sun day entries are data-complete but dormant: the UI tabs and the
-// export currently cover Mon-Fri only.
+// Sat/Sun day entries were written data-complete while the UI still covered
+// Mon-Fri only; they render and export normally now that weekend days ship.
 //
 // ID note: every exercise this week recurred from wk28/wk29, so every id is
 // reused and no new ids are minted (KV logs are queried by exercise id
@@ -375,8 +375,6 @@ export default {
       ],
     },
     {
-      // Dormant in the current Mon-Fri UI; kept so the module documents the
-      // full 20-26 July week (see header note).
       day: 'Sat',
       blocks: [
         {

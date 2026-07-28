@@ -43,7 +43,7 @@ export interface Block {
   wendler?: boolean // marks the 5/3/1 main-lift blocks; drives the STATE line
 }
 
-export type DayName = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri'
+export type DayName = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun'
 
 export interface PlanDay {
   day: DayName
