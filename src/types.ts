@@ -43,7 +43,7 @@ export interface Block {
   wendler?: boolean // marks the 5/3/1 main-lift blocks; drives the STATE line
 }
 
-export type DayName = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri'
+export type DayName = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun'
 
 export interface PlanDay {
   day: DayName
@@ -55,6 +55,7 @@ export interface WeekPlan {
   label: string // "6-10 July"
   wendler?: { cycle: number; week: number }
   stages?: string // skill-ladder state echoed into the export, e.g. "BMU s1 | DU s1"
+  notes?: string // the planner's free-text intent for the week; echoed into the export
   days: PlanDay[]
 }
 
@@ -83,6 +84,12 @@ export interface ExerciseLog {
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
+  // Dropped for this week without dropping the session around it — the
+  // block-level skip's finer-grained sibling. The exercise stays visible as a
+  // placeholder and anything already logged against it is kept, so a skip is
+  // always reversible. Skipped beats done: it is what the export reports.
+  skipped?: boolean
+  skipReason?: string // optional; a skip costs one tap, the reason is an afterthought
   swap?: string // legacy (v5-era): catalogue id logged in place of the plan's. The swap UI
   // was replaced by added exercises; old records still render/export correctly.
   rpe?: number | null // 1-10

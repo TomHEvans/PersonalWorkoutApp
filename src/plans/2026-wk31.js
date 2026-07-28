@@ -23,9 +23,13 @@
 // handstand walks, Olympic lifting, physio) is NOT an accessory and stays.
 //
 // Physio placement this week: banded crab walks as the Wednesday squat warm-up;
-// the knee block once, on Saturday, carried as a dormant Friday reminder
-// because the app has no weekend days yet. The shoulder programme already ran
-// as Monday's press warm-up.
+// the knee block once, on Saturday. The shoulder programme already ran as
+// Monday's press warm-up.
+//
+// Weekend days shipped, so Saturday is a real logged day and the knee block and
+// the easy run sit on Sat where they belong. They are no longer carried as
+// dormant "SATURDAY:" reminder blocks on Friday, and the physio movements keep
+// their per-set rows because the day is now actually logged.
 //
 // Contingency: none. No travel this week.
 //
@@ -44,9 +48,9 @@ export default {
   label: '27 July - 2 August',
   wendler: { cycle: 2, week: 1 },
   stages:
-    'C2W1 5s week (TMs held 63/126/171) | Mon press done 52.5x6 to failure - do not repeat | Tue missed, squat -> Wed | DL Thu | ATHX endurance sim + metcon Fri (supersedes the skipped C2 intervals) | Sat blocks shown on Fri',
+    'C2W1 5s week (TMs held 63/126/171) | Mon press done 52.5x6 to failure - do not repeat | Tue missed, squat -> Wed | DL Thu | ATHX endurance sim + metcon Fri (supersedes the skipped C2 intervals) | Sat knee physio + easy run',
   notes:
-    'Revised 28 July: Tue missed, squat moved to Wed, DL to Thu, ATHX work to Fri. Standing rule from 28 July: Wendler days carry the main lift and its warm-ups only, no accessories unless asked for by name. The two blocks marked SATURDAY on Friday are Saturday 1 August work, shown there only because the app has no weekend days yet. 5+ means AMRAP with 1 to 2 reps in reserve, not to failure.',
+    'Revised 28 July: Tue missed, squat moved to Wed, DL to Thu, ATHX work to Fri. Standing rule from 28 July: Wendler days carry the main lift and its warm-ups only, no accessories unless asked for by name. Saturday 1 August (knee physio, 7.5km easy run) is a real Sat day now that weekend days have shipped. 5+ means AMRAP with 1 to 2 reps in reserve, not to failure.',
   days: [
     {
       day: 'Mon',
@@ -336,51 +340,87 @@ export default {
             },
           ],
         },
+      ],
+    },
+    {
+      day: 'Sat',
+      blocks: [
         {
-          // DORMANT REMINDER — this is Saturday 1 August work. It sits on Friday
-          // only because the app has no weekend days yet; once they ship, move
-          // this block (and sat-reminder-run below) to a real Sat day entry.
-          id: 'sat-reminder-physio',
-          title: 'SATURDAY 1 AUG reminder (not logged here) - Knee physio block',
-          short: 'Sat: physio',
+          id: 'sat-knee-physio',
+          title: 'Knee physio block',
+          short: 'knee physio',
           priority: 1,
           exercises: [
-            { id: 'dj-two-foot', name: 'Drop jump two-foot land', rx: '2x6', measure: 'reps' },
-            { id: 'dj-single', name: 'Drop jump single-leg land and hold', rx: '3x3', measure: 'reps' },
-            { id: 'line-jumps', name: 'Forward line jumps', rx: '2x10', measure: 'reps' },
-            { id: 'trx-squat', name: 'TRX squat', rx: '3x8', measure: 'reps' },
-            { id: 'step-down', name: 'Lateral step down heel tap', rx: '2x5', measure: 'reps' },
+            {
+              id: 'dj-two-foot',
+              name: 'Drop jump two-foot land',
+              rx: '2x6',
+              measure: 'reps',
+              sets: [{ r: 6 }, { r: 6 }],
+            },
+            {
+              id: 'dj-single',
+              name: 'Drop jump single-leg land and hold',
+              rx: '3x3',
+              measure: 'reps',
+              sets: [{ r: 3 }, { r: 3 }, { r: 3 }],
+            },
+            { id: 'line-jumps', name: 'Forward line jumps', rx: '2x10', measure: 'reps', sets: [{ r: 10 }, { r: 10 }] },
+            { id: 'trx-squat', name: 'TRX squat', rx: '3x8', measure: 'reps', sets: [{ r: 8 }, { r: 8 }, { r: 8 }] },
+            {
+              id: 'step-down',
+              name: 'Lateral step down heel tap',
+              rx: '2x5',
+              measure: 'reps',
+              sets: [{ r: 5 }, { r: 5 }],
+            },
             {
               id: 'hip-thrust',
               name: 'Single-leg barbell hip extension',
               rx: '3x8, load as appropriate',
               measure: 'weightReps',
+              sets: [{ r: 8 }, { r: 8 }, { r: 8 }],
             },
             {
               id: 'copenhagen',
               name: 'Copenhagen hip adduction',
               rx: '3x5 with a 5 second hold, lower leg hip variant',
               measure: 'reps',
+              sets: [{ r: 5 }, { r: 5 }, { r: 5 }],
             },
-            { id: 'leg-press', name: 'Leg press', rx: '3x12 at 60 kg', measure: 'weightReps' },
+            {
+              id: 'leg-press',
+              name: 'Leg press',
+              rx: '3x12 at 60 kg',
+              measure: 'weightReps',
+              sets: [
+                { w: 60, r: 12 },
+                { w: 60, r: 12 },
+                { w: 60, r: 12 },
+              ],
+            },
             {
               id: 'knee-ext',
               name: 'Knee extension single leg',
               rx: '3x8 at 14 kg, 90 to 40 degrees only',
               measure: 'weightReps',
+              sets: [
+                { w: 14, r: 8 },
+                { w: 14, r: 8 },
+                { w: 14, r: 8 },
+              ],
             },
             { id: 'skip', name: 'Rope skipping', rx: '4 x 1 min 30 sec', measure: 'time' },
           ],
         },
         {
-          // DORMANT REMINDER — Saturday 1 August work; see the note above.
-          id: 'sat-reminder-run',
-          title: 'SATURDAY 1 AUG reminder (not logged here) - 7.5km easy run',
-          short: 'Sat: run',
+          id: 'sat-run',
+          title: 'Easy run',
+          short: 'easy run',
           priority: 3,
           exercises: [
             {
-              id: 'sat-run',
+              id: 'easy-run-75',
               name: '7.5km easy run',
               rx: '7.5km easy, conversational pace',
               measure: 'freeText',

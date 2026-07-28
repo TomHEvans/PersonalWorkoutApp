@@ -1,4 +1,4 @@
-import type { Block, DayName, Deferral, WeekLog, WeekPlan } from '../types'
+import type { Block, DayName, Deferral, Exercise, WeekLog, WeekPlan } from '../types'
 import { weeks as rawWeeks, currentWeekId } from '../plans/index.js'
 
 // Typed boundary around the plain-JS plan modules.
@@ -11,17 +11,35 @@ export function getPlan(weekId: string): WeekPlan {
   return weeks[weekId] ?? weeks[currentWeekId]
 }
 
-export const DAY_NAMES: DayName[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+// The full week. Ordered Mon-first (training weeks run Mon-Sun, not Sun-Sat),
+// which is also the order the day tabs and the export's day lines use.
+export const DAY_NAMES: DayName[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export function todayName(): DayName | null {
-  const d = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()]
-  return DAY_NAMES.includes(d as DayName) ? (d as DayName) : null
+export const isWeekend = (day: DayName): boolean => day === 'Sat' || day === 'Sun'
+
+// Date.getDay() is Sun-indexed; DAY_NAMES is Mon-first, so this maps rather
+// than indexes. Every real day now has a tab, so it never returns null.
+export function todayName(): DayName {
+  return (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as DayName[])[new Date().getDay()]
 }
 
 export function findBlock(plan: WeekPlan, blockId: string): { block: Block; day: DayName } | null {
   for (const day of plan.days) {
     const block = day.blocks.find((b) => b.id === blockId)
     if (block) return { block, day: day.day }
+  }
+  return null
+}
+
+export function findExercise(
+  plan: WeekPlan,
+  exerciseId: string,
+): { exercise: Exercise; block: Block; day: DayName } | null {
+  for (const day of plan.days) {
+    for (const block of day.blocks) {
+      const exercise = block.exercises.find((e) => e.id === exerciseId)
+      if (exercise) return { exercise, block, day: day.day }
+    }
   }
   return null
 }
