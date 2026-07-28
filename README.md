@@ -292,10 +292,12 @@ secret is missing, every API request returns 401 until it is set.
   the same handler if you ever deploy as a Pages project instead.
 - **Cloudflare KV**: one namespace, one key per week.
 - Hand-written **service worker** + manifest for PWA / offline. The app icon (a
-  barbell in the app's accent on the ink background) is defined geometrically in
-  [`scripts/gen-icons.mjs`](scripts/gen-icons.mjs) and rendered by a hand-rolled
-  PNG encoder, so `npm run icons` needs no fonts or image libraries and produces
-  identical output anywhere.
+  lifter with a barbell overhead, in the app's accent on the ink background) is
+  defined geometrically in [`scripts/gen-icons.mjs`](scripts/gen-icons.mjs) as
+  capsules and rendered by a hand-rolled PNG encoder, so `npm run icons` needs
+  no fonts or image libraries and produces identical output anywhere. The mark
+  is scaled by its true ink radius, so the maskable safe zone holds even if the
+  figure is redrawn.
 
 ## Deploy
 

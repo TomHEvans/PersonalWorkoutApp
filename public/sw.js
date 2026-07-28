@@ -9,7 +9,7 @@
 // Bump on any change to an UNHASHED asset (the icons, the manifest). Those are
 // served cache-first under these names, so without a rename the old copy is
 // served forever — activate() only drops caches whose name no longer matches.
-// v2: the barbell icons.
+// v2: the lifter icons.
 const VERSION = 'v2'
 const SHELL_CACHE = `shell-${VERSION}`
 const ASSET_CACHE = `assets-${VERSION}`
