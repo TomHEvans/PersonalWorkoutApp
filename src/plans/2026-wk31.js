@@ -24,10 +24,9 @@
 // shoulder programme is DONE — it ran as Monday's press-day warm-up. The
 // once-weekly knee block sits on Saturday.
 //
-// The app has no Saturday yet, so Saturday's work is carried as two clearly
-// labelled dormant reminder blocks on Friday (ids sat-knee-physio and
-// sat-run, titles prefixed "SATURDAY:"). Tom is adding weekend days to the
-// app; once that ships these become a real Sat day.
+// Saturday is a real day in the app now (weekend days shipped), so the knee
+// physio block and the easy run sit on Sat where they belong — they were
+// carried as dormant "SATURDAY:" reminder blocks on Friday until then.
 //
 // ID note: recurring movements keep their stable ids (squat-main, dl-main, du,
 // c2b, mu-transition, power-clean, straight-arm-pulldown,
@@ -51,9 +50,9 @@ export default {
   label: '27 July - 2 August',
   wendler: { cycle: 2, week: 1 },
   stages:
-    'C2W1 5s week (TMs held 63/126/171) | Mon press done 52.5x6 | Tue missed, squat -> Wed | DL Thu | ATHX endurance sim + metcon Fri (supersedes the skipped C2 intervals) | Sat blocks shown on Fri',
+    'C2W1 5s week (TMs held 63/126/171) | Mon press done 52.5x6 | Tue missed, squat -> Wed | DL Thu | ATHX endurance sim + metcon Fri (supersedes the skipped C2 intervals) | Sat knee physio + easy run',
   notes:
-    'Revised 28 July: Tue missed, squat moved to Wed. Holiday cancelled, Thu/Fri live. Priority order now ATHX first, CrossFit skills second, running third. The two blocks marked SATURDAY on Friday are Saturday 1 August work, shown there only because the app has no weekend days yet. 5+ means AMRAP with 1 to 2 reps in reserve, not to failure.',
+    'Revised 28 July: Tue missed, squat moved to Wed. Holiday cancelled, Thu/Fri live. Priority order now ATHX first, CrossFit skills second, running third. Saturday 1 August (knee physio, 7.5km easy run) is now a real Sat day in the app rather than two reminder blocks on Friday. 5+ means AMRAP with 1 to 2 reps in reserve, not to failure.',
   days: [
     {
       day: 'Mon',
@@ -370,13 +369,15 @@ export default {
             },
           ],
         },
+      ],
+    },
+    {
+      day: 'Sat',
+      blocks: [
         {
-          // DORMANT REMINDER — this is Saturday 1 August work. It sits on Friday
-          // only because the app has no weekend days yet; once they ship, move
-          // this block (and sat-run below) to a real Sat day entry.
           id: 'sat-knee-physio',
-          title: 'SATURDAY: knee physio block',
-          short: 'Sat physio',
+          title: 'Knee physio block',
+          short: 'knee physio',
           priority: 1,
           exercises: [
             {
@@ -442,10 +443,9 @@ export default {
           ],
         },
         {
-          // DORMANT REMINDER — Saturday 1 August work; see the note above.
           id: 'sat-run',
-          title: 'SATURDAY: easy run',
-          short: 'Sat run',
+          title: 'Easy run',
+          short: 'easy run',
           priority: 1,
           exercises: [
             {

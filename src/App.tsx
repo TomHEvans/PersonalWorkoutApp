@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { DayName, ExerciseLog, WeekLog } from './types'
-import { DAY_NAMES, currentWeekId, getPlan, todayName, weekIds } from './lib/plans'
+import { DAY_NAMES, currentWeekId, getPlan, isWeekend, todayName, weekIds } from './lib/plans'
 import { makeAdded } from './lib/added'
 import { getToken } from './lib/api'
 import { useLog } from './hooks/useLog'
@@ -8,12 +8,14 @@ import TokenGate from './components/TokenGate'
 import Header from './components/Header'
 import DayView from './components/DayView'
 import WeekPanel from './components/WeekPanel'
-
-type Tab = DayName | 'week'
+import TabBar, { type SectionId } from './components/TabBar'
 
 function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
   const [weekId, setWeekId] = useState(currentWeekId)
-  const [tab, setTab] = useState<Tab>(() => todayName() ?? 'Mon')
+  // Section (bottom bar) and day (top tabs) are independent: leaving Train for
+  // the Week summary and coming back keeps the day you were logging.
+  const [section, setSection] = useState<SectionId>('train')
+  const [day, setDay] = useState<DayName>(todayName)
   const plan = getPlan(weekId)
   const { log, status, update, retry } = useLog(weekId)
 
@@ -62,42 +64,56 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
 
   const onQuick = (patch: Partial<Pick<WeekLog, 'maxDU' | 'c2'>>) => update((prev) => ({ ...prev, ...patch }))
 
+  // Restoring from the Week panel clears the reason with the skip, so a
+  // re-skip does not silently inherit last time's excuse.
+  const onUnskipExercise = (exerciseId: string) =>
+    onExercise(exerciseId, { skipped: false, skipReason: undefined })
+
   const today = todayName()
 
   return (
     <div className="app">
       <Header plan={plan} weekIds={weekIds} weekId={weekId} onWeek={setWeekId} status={status} onRetry={retry} />
-      <nav className="tabs">
-        {DAY_NAMES.map((d) => (
-          <button
-            type="button"
-            key={d}
-            className={`tab${tab === d ? ' active' : ''}${today === d ? ' today' : ''}`}
-            onClick={() => setTab(d)}
-          >
-            {d}
-          </button>
-        ))}
-        <button type="button" className={`tab${tab === 'week' ? ' active' : ''}`} onClick={() => setTab('week')}>
-          Week
-        </button>
-      </nav>
-      {tab === 'week' ? (
-        <WeekPanel plan={plan} log={log} onQuick={onQuick} onRestore={onRestore} />
+      {section === 'train' ? (
+        <>
+          <nav className="tabs" aria-label="Day">
+            {DAY_NAMES.map((d) => (
+              <button
+                type="button"
+                key={d}
+                className={`tab${day === d ? ' active' : ''}${today === d ? ' today' : ''}${
+                  isWeekend(d) ? ' weekend' : ''
+                }`}
+                aria-current={day === d ? 'page' : undefined}
+                onClick={() => setDay(d)}
+              >
+                {d}
+              </button>
+            ))}
+          </nav>
+          <DayView
+            plan={plan}
+            log={log}
+            day={day}
+            onExercise={onExercise}
+            onDefer={onDefer}
+            onRestore={onRestore}
+            onMove={onMove}
+            onAddExercise={onAddExercise}
+            onRemoveAdded={onRemoveAdded}
+            onSessionNote={onSessionNote}
+          />
+        </>
       ) : (
-        <DayView
+        <WeekPanel
           plan={plan}
           log={log}
-          day={tab}
-          onExercise={onExercise}
-          onDefer={onDefer}
+          onQuick={onQuick}
           onRestore={onRestore}
-          onMove={onMove}
-          onAddExercise={onAddExercise}
-          onRemoveAdded={onRemoveAdded}
-          onSessionNote={onSessionNote}
+          onUnskipExercise={onUnskipExercise}
         />
       )}
+      <TabBar section={section} onSection={setSection} />
     </div>
   )
 }
