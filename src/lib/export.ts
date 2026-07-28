@@ -172,6 +172,9 @@ interface Context {
 // repeated text.
 function exerciseRows(ctx: Context, exercise: Exercise, entry: ExerciseLog | undefined, added: boolean): Row[] {
   const measure = resolveMeasure(exercise, entry)
+  // Either the whole block was skipped, or this one exercise was. Both report
+  // `skipped`; the header's skipped= / skipped_exercises= lines say which.
+  const skipped = ctx.skipped || Boolean(entry?.skipped)
   const base: Row = {
     day: ctx.day,
     date: ctx.date,
@@ -200,11 +203,7 @@ function exerciseRows(ctx: Context, exercise: Exercise, entry: ExerciseLog | und
         ...base,
         ...head,
         act_value: actual,
-        status: ctx.skipped
-          ? 'skipped'
-          : entry?.done
-            ? 'completed'
-            : openStatus(ctx, noted || Boolean(actual)),
+        status: skipped ? 'skipped' : entry?.done ? 'completed' : openStatus(ctx, noted || Boolean(actual)),
       },
     ]
   }
@@ -225,7 +224,7 @@ function exerciseRows(ctx: Context, exercise: Exercise, entry: ExerciseLog | und
       plan_w: exercise.sets?.[i]?.w,
       plan_r: exercise.sets?.[i]?.r,
       ...act,
-      status: ctx.skipped ? 'skipped' : set.done ? 'completed' : openStatus(ctx, typed || noted),
+      status: skipped ? 'skipped' : set.done ? 'completed' : openStatus(ctx, typed || noted),
     }
   })
 }
@@ -277,11 +276,13 @@ function blockTally(rows: Row[]): string {
   const counts: Record<string, number> = {}
   for (const statuses of byBlock.values()) {
     const done = statuses.filter((s) => s === 'completed').length
-    const key = statuses.includes('skipped')
+    // `skipped` only when the WHOLE block went: one skipped exercise inside a
+    // session that otherwise ran is a partial block, not a skipped one.
+    const key = statuses.every((s) => s === 'skipped')
       ? 'skipped'
       : done === statuses.length
         ? 'completed'
-        : done > 0
+        : done > 0 || statuses.includes('skipped')
           ? 'partial'
           : statuses.every((s) => s === 'planned')
             ? 'planned'
@@ -298,7 +299,8 @@ const LEGEND = [
   '# no exercises, get a single row with set blank. Exercise-level fields (plan_rx,',
   '# rpe, note) are on the first row of each exercise only. Blank means no value,',
   '# never zero. A "|" inside free text was replaced with "/".',
-  '# status: completed = ticked in the app | skipped = block skipped, reason above',
+  '# status: completed = ticked in the app | skipped = the block or the exercise',
+  '#   itself was skipped, reason on the skipped= / skipped_exercises= line above',
   '#   | planned = day still ahead | not_logged = reached, nothing ticked.',
   '#   Derived from ticks alone: act_* columns can carry typed values on a row',
   '#   that was never ticked, and nothing here is inferred beyond that.',
@@ -342,6 +344,19 @@ export function buildExport(plan: WeekPlan, log: WeekLog): string {
 
   const skipped = log.deferred.map((d) => `${d.blockId} (${d.from}) "${cell(d.reason) || 'no reason given'}"`)
   head.push(`skipped=${skipped.length > 0 ? skipped.join('; ') : 'none'}`)
+
+  // Exercises skipped on their own, inside a session that otherwise ran. Read
+  // off the rows so a skip against an exercise the plan no longer carries
+  // cannot show up here as a phantom.
+  const seen = new Set<string>()
+  const skippedExercises: string[] = []
+  for (const r of rows) {
+    const id = String(r.exercise_id ?? '')
+    if (!id || seen.has(id) || !log.exercises[id]?.skipped) continue
+    seen.add(id)
+    skippedExercises.push(`${id} (${r.day}) "${cell(log.exercises[id].skipReason) || 'no reason given'}"`)
+  }
+  head.push(`skipped_exercises=${skippedExercises.length > 0 ? skippedExercises.join('; ') : 'none'}`)
 
   if (log.maxDU != null) head.push(`max_du_fresh=${log.maxDU}`)
   if (log.c2) head.push(`c2=${cell(log.c2)}`)

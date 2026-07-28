@@ -123,9 +123,20 @@ Block actions:
 
 - **Skip** drops the block for this week, with a reason. Skipped blocks stay
   visible on their home day as placeholders (nothing lost silently), appear in
-  the export's `SKIPPED` line, and can be restored. (Stored under the log's
+  the export's `skipped=` line, and can be restored. (Stored under the log's
   `deferred` field for data compatibility.)
 - **Move** reshuffles a block to any other day of the week, weekend included.
+
+Individual exercises have their own **skip** pill next to the type tag, for
+dropping one movement without dropping the session around it — a tweaky
+shoulder, a machine someone else is on. It costs one tap; the reason is
+optional and asked for afterwards, so nothing stands between you and the next
+set. A skipped exercise stays on the day as a struck-through placeholder, keeps
+whatever was already logged against it (restoring brings the ticks and numbers
+back untouched), never counts toward completion or the Wendler roll-up, and
+appears in both the Week section's **Skipped** list and the export's
+`skipped_exercises=` line. Skipped beats done: if it is skipped, that is what
+the export reports, whatever is ticked underneath.
 
 "Compress week" judgment is never done in-app; that belongs to the planning
 chat where the fatigue rules live.
@@ -149,6 +160,7 @@ plan_notes=Revised 28 July: Tue missed, squat moved to Wed. …
 blocks=19 (2 completed, 3 partial, 1 skipped, 5 not_logged, 8 planned)
 moved=wed-squat Tue->Wed
 skipped=thu-oly (Thu) "work ran late"
+skipped_exercises=scap (Mon) "shoulder tight"
 max_du_fresh=34
 c2=4x6min 2:05/500m
 session_notes=Mon="slept badly"
@@ -166,8 +178,9 @@ Four properties make it unambiguous, and they are the whole point of the format:
   against it. "Planned and not done" and "never planned" are different facts,
   and only the app knows which is which.
 - **Nothing is inferred.** `status` is one of `completed` (ticked), `skipped`
-  (the block was skipped — the reason is on the header's `skipped=` line),
-  `planned` (the day is still ahead) or `not_logged` (reached, nothing ticked).
+  (the block or the exercise itself was skipped — the reason is on the header's
+  `skipped=` or `skipped_exercises=` line), `planned` (the day is still ahead)
+  or `not_logged` (reached, nothing ticked).
   Typed values still ride the `act_*` columns on a `not_logged` row, so the
   reader applies its own evidence rules rather than inheriting a guess. A row
   with an RPE, a note or a typed number is never `planned`, even on a future
@@ -191,7 +204,7 @@ whether an untouched future day reports `planned` or `not_logged`.
 ## Sync design
 
 - **Local-first**: every change writes to `localStorage` immediately under a
-  versioned key (`athx-log-v6:<weekId>`), then a debounced `PUT` to
+  versioned key (`athx-log-v8:<weekId>`), then a debounced `PUT` to
   `/api/log/:weekId` (KV allows ~1 write/sec per key).
 - **On load**: `GET` from KV, whole-record merge by `updatedAt`, last write
   wins (single user, acceptable).
@@ -199,14 +212,16 @@ whether an untouched future day reports `planned` or `not_logged`.
   when connectivity returns. The service worker keeps the app shell loading
   offline (PWA, installable).
 - **Versioning rule**: any structural change to the log shape bumps the
-  localStorage key version (`v1` → … → `v6`) so stale state never merges
+  localStorage key version (`v1` → … → `v8`) so stale state never merges
   into new code. KV records are unversioned; v2-era records were repaired by
   the one-shot v2 → v3 migration (`src/lib/migrate.ts`) and rewritten clean.
   The repair never runs on v3+ data — a typed `0` weight legitimately means
   bodyweight and is kept as logged. `v4` added the per-set band colour and the
   per-exercise measure override; `v5` the (since-retired) exercise swap and
-  per-set time/cal/distance; `v6` per-block added exercises — all purely
-  additive, so those migrations just move the record forward.
+  per-set time/cal/distance; `v6` per-block added exercises; `v7` stored set
+  values as coerced clean numbers (dropping corrupted legacy ones); `v8` the
+  per-exercise skip — all purely additive beyond v7's scrub, so those
+  migrations just move the record forward.
 
 ## The log API
 
@@ -229,10 +244,12 @@ var; mismatches return `401`. KV layout: key `log:<weekId>` holds:
     "press-main": { sets: [ { w: "40", r: "5", done: true }, { w: "47.5", r: "5", done: true },
                             { w: "52.5", r: "7", done: true } ], rpe: 8, note: "strong" },
     // free-text: runs, C2, anything without programmed sets
-    "easy-run": { done: true, actual: "7.5km 42:10", rpe: 6 }
+    "easy-run": { done: true, actual: "7.5km 42:10", rpe: 6 },
+    // skipped on its own; anything logged before the skip is kept and restored with it
+    "scap": { skipped: true, skipReason: "shoulder tight" }
   },
   sessionNotes: { "Mon": "slept badly" },
-  deferred: [ { blockId: "cj", from: "Thu", reason: "London trip" } ],
+  deferred: [ { blockId: "cj", from: "Thu", reason: "London trip" } ], // whole-block skips
   moves: { "c2-block": "Wed" },
   maxDU: 34,
   c2: "4x6min 2:05/500m",

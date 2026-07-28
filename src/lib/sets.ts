@@ -44,7 +44,11 @@ export function effectiveSets(exercise: Exercise, entry: ExerciseLog | undefined
   return exercise.sets.map((_, i) => entry?.sets?.[i] ?? { w: '', r: '', done: false })
 }
 
+// A skipped exercise is never done, whatever is ticked underneath it: the tick
+// state is kept (a skip has to be reversible without losing what was logged),
+// but it must not count toward completion, the Wendler roll-up or the export.
 export function isExerciseDone(exercise: Exercise, entry: ExerciseLog | undefined): boolean {
+  if (entry?.skipped) return false
   if (!exercise.sets) return Boolean(entry?.done)
   const sets = effectiveSets(exercise, entry)
   return sets.length > 0 && sets.every((s) => s.done)

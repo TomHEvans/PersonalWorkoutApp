@@ -593,6 +593,46 @@ select:focus {
   border-color: var(--accent);
 }
 
+/* per-exercise skip: drop one movement without dropping the session */
+.skip-btn {
+  flex: none;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.skip-btn:hover {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* Only the name is struck through: a line-through on the whole name-line
+   would propagate into the tag beside it, and a descendant cannot cancel it. */
+.skipped-name {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--border);
+}
+
+.skipped-tag {
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--warn);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+}
+
 /* remove button on added-in-session exercises */
 .remove-added {
   flex: none;

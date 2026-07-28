@@ -84,6 +84,12 @@ export interface ExerciseLog {
   actual?: string // free text, e.g. "52.5x7" (non-set exercises)
   sets?: SetLog[] // set-based exercises, index-aligned with the plan's sets
   measure?: MeasureType // per-exercise override of how it is logged (the in-app adjuster)
+  // Dropped for this week without dropping the session around it — the
+  // block-level skip's finer-grained sibling. The exercise stays visible as a
+  // placeholder and anything already logged against it is kept, so a skip is
+  // always reversible. Skipped beats done: it is what the export reports.
+  skipped?: boolean
+  skipReason?: string // optional; a skip costs one tap, the reason is an afterthought
   swap?: string // legacy (v5-era): catalogue id logged in place of the plan's. The swap UI
   // was replaced by added exercises; old records still render/export correctly.
   rpe?: number | null // 1-10

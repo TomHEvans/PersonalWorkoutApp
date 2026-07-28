@@ -1,4 +1,4 @@
-import type { Block, DayName, Deferral, WeekLog, WeekPlan } from '../types'
+import type { Block, DayName, Deferral, Exercise, WeekLog, WeekPlan } from '../types'
 import { weeks as rawWeeks, currentWeekId } from '../plans/index.js'
 
 // Typed boundary around the plain-JS plan modules.
@@ -27,6 +27,16 @@ export function findBlock(plan: WeekPlan, blockId: string): { block: Block; day:
   for (const day of plan.days) {
     const block = day.blocks.find((b) => b.id === blockId)
     if (block) return { block, day: day.day }
+  }
+  return null
+}
+
+export function findExercise(plan: WeekPlan, exerciseId: string): { exercise: Exercise; day: DayName } | null {
+  for (const day of plan.days) {
+    for (const block of day.blocks) {
+      const exercise = block.exercises.find((e) => e.id === exerciseId)
+      if (exercise) return { exercise, day: day.day }
+    }
   }
   return null
 }

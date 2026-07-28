@@ -257,6 +257,36 @@ function ExerciseRow({
   const options = setBased ? SET_MEASURES : FREE_MEASURES
   const displayName = entry.swap ? (catalogueEntry(entry.swap)?.name ?? entry.swap) : exercise.name
 
+  // Skipped: the exercise stays on the day as a placeholder (nothing
+  // disappears silently) with its inputs put away. Whatever was logged before
+  // the skip is untouched underneath and comes back on Restore. The reason is
+  // optional and asked for AFTER the skip — one tap is all it costs mid-session.
+  if (entry.skipped) {
+    return (
+      <div className="exercise skipped">
+        <div className="exercise-head">
+          <div className="exercise-name">
+            <span className="name-line">
+              <span className="skipped-name">{displayName}</span>
+              <span className="skipped-tag">skipped</span>
+            </span>
+            <span className="rx">{exercise.rx}</span>
+          </div>
+        </div>
+        <div className="inline-form">
+          <input
+            placeholder="Reason (optional)"
+            value={entry.skipReason ?? ''}
+            onChange={(e) => onChange({ skipReason: e.target.value })}
+          />
+          <button type="button" className="btn small" onClick={() => onChange({ skipped: false })}>
+            Restore
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const toggleAll = () => {
     if (setBased) onChange({ sets: sets.map((s) => ({ ...s, done: !done })) })
     else onChange({ done: !entry.done })
@@ -286,6 +316,14 @@ function ExerciseRow({
               onClick={() => setAdjusting((v) => !v)}
             >
               {tag} ▾
+            </button>
+            <button
+              type="button"
+              className="skip-btn"
+              aria-label={`Skip ${displayName}`}
+              onClick={() => onChange({ skipped: true })}
+            >
+              skip
             </button>
             {onRemove && (
               <button type="button" className="remove-added" aria-label="Remove added exercise" onClick={onRemove}>

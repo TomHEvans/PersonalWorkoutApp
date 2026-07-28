@@ -64,6 +64,11 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
 
   const onQuick = (patch: Partial<Pick<WeekLog, 'maxDU' | 'c2'>>) => update((prev) => ({ ...prev, ...patch }))
 
+  // Restoring from the Week panel clears the reason with the skip, so a
+  // re-skip does not silently inherit last time's excuse.
+  const onUnskipExercise = (exerciseId: string) =>
+    onExercise(exerciseId, { skipped: false, skipReason: undefined })
+
   const today = todayName()
 
   return (
@@ -100,7 +105,13 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
           />
         </>
       ) : (
-        <WeekPanel plan={plan} log={log} onQuick={onQuick} onRestore={onRestore} />
+        <WeekPanel
+          plan={plan}
+          log={log}
+          onQuick={onQuick}
+          onRestore={onRestore}
+          onUnskipExercise={onUnskipExercise}
+        />
       )}
       <TabBar section={section} onSection={setSection} />
     </div>
