@@ -1,6 +1,14 @@
-// Generate simple placeholder PWA icons with no external dependencies.
-// Draws set-chips (three squares) on the ink background — on-brand with the
-// app's set-chip motif. Run with: npm run icons
+// Generate the PWA icons with no external dependencies. Run with: npm run icons
+//
+// The mark is a barbell — two plates a side and a bar — drawn from rounded
+// rectangles in the app's own palette (accent plates, text-white bar, ink
+// background). It is defined geometrically rather than exported from a design
+// tool so this script stays the single source of truth: same output on any
+// machine, no fonts and no image libraries involved.
+//
+// Shapes are anti-aliased by supersampling coverage (4x4 samples per pixel)
+// against a signed distance function, which the previous hard-edged fillRect
+// could not do — rounded corners need it or they come out as visible steps.
 import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -9,50 +17,79 @@ import { dirname, join } from 'node:path'
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
 mkdirSync(OUT, { recursive: true })
 
-const INK = [0x18, 0x1b, 0x22]
-const CHIPS = [
-  [0xd6, 0x45, 0x3d], // strength red
-  [0x4f, 0x9d, 0x4a], // easy-run green
-  [0x7a, 0x5a, 0xf0], // long-run purple
+const INK = [0x14, 0x16, 0x1c] // --bg
+const ACCENT = [0x4f, 0x8c, 0xff] // --accent
+const BAR = [0xe8, 0xeb, 0xf1] // --text
+
+// The mark, in a 100x100 design space centred on (50, 50). Its bounding box is
+// x 6..94, y 30..70 — wide and short, which is what keeps it comfortably
+// inside the maskable safe circle (see FRACTION below).
+//
+// The bar is drawn first and runs 2 units under each inner plate: two shapes
+// that merely touched would each anti-alias against the background and leave a
+// faint seam down the join.
+const SHAPES = [
+  { x: 34, y: 46, w: 32, h: 8, r: 4, rgb: BAR }, // bar
+  { x: 22, y: 30, w: 14, h: 40, r: 3.5, rgb: ACCENT }, // inner plates
+  { x: 64, y: 30, w: 14, h: 40, r: 3.5, rgb: ACCENT },
+  { x: 6, y: 38, w: 12, h: 24, r: 3, rgb: ACCENT }, // outer plates
+  { x: 82, y: 38, w: 12, h: 24, r: 3, rgb: ACCENT },
 ]
+
+const MARK_W = 88 // design-space width of the bounding box above
+
+// How much of the icon's width the mark spans. Maskable icons are cropped to
+// the centre 80% circle, so the mark's half-diagonal (48.33 design units) has
+// to stay inside a radius of 0.4: at 0.66 it lands at 0.363, with room spare.
+const FRACTION = { any: 0.76, maskable: 0.66 }
+
+// Signed distance to a rounded rectangle: negative inside, positive outside,
+// crossing zero exactly on the edge. Sampling its sign gives the coverage that
+// makes the corners smooth.
+function sdRoundRect(px, py, s) {
+  const cx = s.x + s.w / 2
+  const cy = s.y + s.h / 2
+  const qx = Math.abs(px - cx) - (s.w / 2 - s.r)
+  const qy = Math.abs(py - cy) - (s.h / 2 - s.r)
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - s.r
+}
+
+const SAMPLES = 4 // per axis, so 16 coverage samples per pixel
 
 function render(size, maskable) {
   const buf = Buffer.alloc(size * size * 4)
-  for (let i = 0; i < size * size; i++) {
-    buf[i * 4] = INK[0]
-    buf[i * 4 + 1] = INK[1]
-    buf[i * 4 + 2] = INK[2]
-    buf[i * 4 + 3] = 255
-  }
-  // Keep the mark inside the maskable safe zone (~80%).
-  const area = maskable ? 0.5 : 0.64
-  const availW = size * area
-  const chip = availW / 3.56
-  const gap = chip * 0.28
-  const totalW = chip * 3 + gap * 2
-  const x0 = (size - totalW) / 2
-  const y0 = (size - chip) / 2
-  for (let c = 0; c < 3; c++) {
-    fillRect(buf, size, x0 + c * (chip + gap), y0, chip, chip, CHIPS[c])
-  }
-  return buf
-}
+  const scale = (FRACTION[maskable ? 'maskable' : 'any'] * size) / MARK_W
+  const offset = size / 2 - 50 * scale // design (50,50) -> pixel centre
+  const toDesign = (p) => (p - offset) / scale
 
-function fillRect(buf, size, x, y, w, h, rgb) {
-  const x1 = Math.round(x)
-  const y1 = Math.round(y)
-  const x2 = Math.round(x + w)
-  const y2 = Math.round(y + h)
-  for (let py = y1; py < y2; py++) {
-    for (let px = x1; px < x2; px++) {
-      if (px < 0 || py < 0 || px >= size || py >= size) continue
+  for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      let r = INK[0]
+      let g = INK[1]
+      let b = INK[2]
+      for (const s of SHAPES) {
+        let hits = 0
+        for (let sy = 0; sy < SAMPLES; sy++) {
+          for (let sx = 0; sx < SAMPLES; sx++) {
+            const dx = toDesign(px + (sx + 0.5) / SAMPLES)
+            const dy = toDesign(py + (sy + 0.5) / SAMPLES)
+            if (sdRoundRect(dx, dy, s) <= 0) hits++
+          }
+        }
+        if (hits === 0) continue
+        const a = hits / (SAMPLES * SAMPLES)
+        r = Math.round(r + (s.rgb[0] - r) * a)
+        g = Math.round(g + (s.rgb[1] - g) * a)
+        b = Math.round(b + (s.rgb[2] - b) * a)
+      }
       const i = (py * size + px) * 4
-      buf[i] = rgb[0]
-      buf[i + 1] = rgb[1]
-      buf[i + 2] = rgb[2]
+      buf[i] = r
+      buf[i + 1] = g
+      buf[i + 2] = b
       buf[i + 3] = 255
     }
   }
+  return buf
 }
 
 // ---- minimal PNG encoder (RGBA, 8-bit) ----

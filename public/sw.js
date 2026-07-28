@@ -6,7 +6,11 @@
  *   so the SW never caches API responses (which would risk serving a stale
  *   log over fresher local edits).
  */
-const VERSION = 'v1'
+// Bump on any change to an UNHASHED asset (the icons, the manifest). Those are
+// served cache-first under these names, so without a rename the old copy is
+// served forever — activate() only drops caches whose name no longer matches.
+// v2: the barbell icons.
+const VERSION = 'v2'
 const SHELL_CACHE = `shell-${VERSION}`
 const ASSET_CACHE = `assets-${VERSION}`
 
@@ -21,6 +25,8 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-maskable-192.png',
+  '/icon-maskable-512.png',
   '/apple-touch-icon.png',
 ]
 
