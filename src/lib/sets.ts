@@ -76,23 +76,29 @@ export const formatSet = (s: SetLog, measure?: MeasureType): string => {
   return r
 }
 
-// Estimated 1RM (Epley: w * (1 + r/30)) from the best completed set with a
-// numeric weight and rep count — in a 5/3/1 week that is the AMRAP top set.
-// Returns null when no completed set qualifies (bodyweight work, weight or
-// reps not filled in, nothing ticked yet). Rounded to 0.5 kg.
+// Estimated 1RM for one set (Epley: w * (1 + r/30)), rounded to 0.5 kg.
+// Returns null unless BOTH weight and reps are present and numeric — an
+// estimate is never made up from a prescription or a half-filled row.
+export function epley(weight: string, reps: string): number | null {
+  const wt = weight.trim()
+  if (!wt) return null
+  const w = Number(wt)
+  if (!Number.isFinite(w) || w <= 0) return null
+  if (!/^\d+$/.test(reps.trim())) return null
+  const r = Number(reps.trim())
+  if (r < 1) return null
+  return Math.round((r === 1 ? w : w * (1 + r / 30)) * 2) / 2
+}
+
+// Estimated 1RM from the best completed set — in a 5/3/1 week that is the
+// AMRAP top set. Returns null when no completed set qualifies (bodyweight
+// work, weight or reps not filled in, nothing ticked yet).
 export function estimate1RM(sets: SetLog[]): number | null {
   let best: number | null = null
   for (const s of sets) {
     if (!s.done) continue
-    const wt = s.w.trim()
-    if (!wt) continue
-    const w = Number(wt)
-    if (!Number.isFinite(w) || w <= 0) continue
-    if (!/^\d+$/.test(s.r.trim())) continue
-    const r = Number(s.r.trim())
-    if (r < 1) continue
-    const e = r === 1 ? w : w * (1 + r / 30)
-    if (best === null || e > best) best = e
+    const e = epley(s.w, s.r)
+    if (e !== null && (best === null || e > best)) best = e
   }
-  return best === null ? null : Math.round(best * 2) / 2
+  return best
 }

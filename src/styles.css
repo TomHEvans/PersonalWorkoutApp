@@ -810,7 +810,16 @@ select:focus {
   padding: 12px;
   font-size: 0.78rem;
   line-height: 1.5;
-  overflow-x: auto;
+  /* The set table runs to ~90 rows of long lines: scroll it in its own box
+     rather than pushing the copy button off the top of a very long page. */
+  max-height: 45vh;
+  overflow: auto;
   white-space: pre;
   margin: 12px 0 0;
+}
+
+.export-size {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 8px 0 0;
 }

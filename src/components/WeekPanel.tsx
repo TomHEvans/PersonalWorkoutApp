@@ -15,6 +15,8 @@ interface Props {
 export default function WeekPanel({ plan, log, onQuick, onRestore }: Props) {
   const [copied, setCopied] = useState(false)
   const text = buildExport(plan, log)
+  // Data rows only: everything after the header, legend and column line.
+  const rows = text.split('\n').filter((l) => l.includes('|') && !l.startsWith('#') && !l.startsWith('day|')).length
 
   const copy = async () => {
     if (await copyText(text)) {
@@ -74,6 +76,9 @@ export default function WeekPanel({ plan, log, onQuick, onRestore }: Props) {
             {copied ? 'Copied ✓' : 'Copy week summary'}
           </button>
         </div>
+        <p className="export-size">
+          {rows} set {rows === 1 ? 'row' : 'rows'} · {text.length.toLocaleString()} characters
+        </p>
         <pre className="export-preview">{text}</pre>
       </section>
     </div>

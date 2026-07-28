@@ -1,153 +1,353 @@
-import type { Block, Exercise, ExerciseLog, WeekLog, WeekPlan } from '../types'
+import type { Block, DayName, Exercise, ExerciseLog, MeasureType, SetLog, WeekLog, WeekPlan } from '../types'
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
 import { catalogueEntry, resolveMeasure } from '../catalogue'
 import { addedToExercise } from './added'
-import { effectiveSets, estimate1RM, formatSet, isExerciseDone } from './sets'
+import { effectiveSets, epley, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
-// Deterministic: same plan + log always produces the same text.
 //
-//   WEEK EXPORT 2026-wk28 (6-10 July)
-//   STATE: Wendler C1W1 complete | BMU s1 | DU s1 | HSW s1 | T2B s1
-//   DEFERRED: clean and jerk (Thu, London trip)
-//   MAX DU FRESH: 34
-//   Mon press: 52.5x7 @8 "strong" | shoulder physio done | BMU done
-//   NOTES: slept badly (Mon)
+// The format is a short key=value header followed by ONE PIPE-DELIMITED ROW
+// PER SET, deliberately shaped like the training log spreadsheet the planning
+// chat writes into (natural key: week_id + day + block_id + exercise_id +
+// set_index). Two rules drive every decision here:
+//
+//   1. Every planned block is emitted, whether or not anything was logged
+//      against it. "Planned and not done" and "never planned" are different
+//      facts, and only the app knows which is which.
+//   2. Nothing is inferred. `status` reflects the ticks in the app and
+//      nothing else; typed values ride along on the act_* columns even where
+//      nothing was ticked, so the reader can apply its own evidence rules.
+//
+// It carries the prescription alongside the actuals so the summary is
+// self-contained: the reader never has to fetch the week's plan module to
+// find an id, a priority or a programmed weight.
+//
+// Deterministic for a given plan, log and export date. The date matters
+// because a day still in the future reports `planned` rather than
+// `not_logged` — a mid-week export must not read as a week of missed work.
 
-const short = (block: Block) => block.short ?? block.title.toLowerCase()
+const FORMAT = 'ATHX WEEK EXPORT v2'
 
-// Collapses a set-based exercise into the ExerciseLog view the segment
-// builder works with: actual = the completed sets ("40x5, 47.5x5, 52.5x7").
-// Sets ticked done with nothing typed contribute no text — done as
-// prescribed is already carried by the done count, never as a fake actual.
-function exerciseView(exercise: Exercise, entry: ExerciseLog | undefined): ExerciseLog {
-  if (!exercise.sets) {
-    const view = entry ?? {}
-    // A bare number typed into a calories-measured actual gets its unit in the
-    // export, so "45" reads as "45 cal" to the planning chat.
-    if (
-      resolveMeasure(exercise, entry) === 'cal' &&
-      view.actual &&
-      /^\d+(\.\d+)?$/.test(view.actual.trim())
-    ) {
-      return { ...view, actual: `${view.actual.trim()} cal` }
-    }
-    return view
+// Column order. Mirrors the log sheet's own column set closely enough that a
+// row maps across field by field.
+const COLUMNS = [
+  'day',
+  'date',
+  'block_id',
+  'block',
+  'prio',
+  'wendler',
+  'exercise_id',
+  'exercise',
+  'measure',
+  'set',
+  'plan_w',
+  'plan_r',
+  'plan_rx',
+  'act_w',
+  'act_r',
+  'act_value',
+  'rpe',
+  'e1rm',
+  'status',
+  'note',
+] as const
+
+// Plan sets carry numbers, the log carries strings; cell() stringifies either.
+type Row = Partial<Record<(typeof COLUMNS)[number], string | number>>
+
+// Rows are pipe-delimited, so a pipe inside free text (a note, an rx string)
+// would silently add a column. Swap it out and flatten any newlines.
+const cell = (value: unknown): string =>
+  value === undefined || value === null
+    ? ''
+    : String(value)
+        .replace(/\|/g, '/')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+const renderRow = (row: Row): string => COLUMNS.map((c) => cell(row[c])).join('|')
+
+// ---------------------------------------------------------------------------
+// Dates. weekId is an ISO week ("2026-wk31"), so the calendar dates are
+// derivable — which is worth doing, because the planning chat keys its records
+// by date and would otherwise infer them from the free-text label.
+// ---------------------------------------------------------------------------
+
+function weekMonday(weekId: string): Date | null {
+  const m = /^(\d{4})-wk(\d{1,2})$/.exec(weekId.trim())
+  if (!m) return null
+  const week = Number(m[2])
+  if (week < 1 || week > 53) return null
+  // ISO-8601: week 1 is the week containing 4 January.
+  const jan4 = new Date(Date.UTC(Number(m[1]), 0, 4))
+  const isoDow = jan4.getUTCDay() === 0 ? 7 : jan4.getUTCDay()
+  const monday = new Date(jan4)
+  monday.setUTCDate(jan4.getUTCDate() - (isoDow - 1) + (week - 1) * 7)
+  return monday
+}
+
+const isoDate = (d: Date): string => d.toISOString().slice(0, 10)
+
+function dayDate(monday: Date | null, day: DayName): string {
+  if (!monday) return ''
+  const d = new Date(monday)
+  d.setUTCDate(monday.getUTCDate() + DAY_NAMES.indexOf(day))
+  return isoDate(d)
+}
+
+// Local today as a plain date string, compared against the day dates above to
+// tell "not logged yet" from "hasn't happened yet".
+function todayISO(): string {
+  const now = new Date()
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+  return isoDate(local)
+}
+
+// ---------------------------------------------------------------------------
+// Status. The app can only honestly report four of the log's status values:
+// what was ticked, what was skipped, what is still ahead, and what is none of
+// those. Everything else (external, deferred to a later week, rest) is a
+// judgment the planning chat makes with context the app does not have.
+// ---------------------------------------------------------------------------
+
+type Status = 'completed' | 'skipped' | 'planned' | 'not_logged'
+
+// Nothing ticked. A day still ahead is `planned` rather than `not_logged`, so
+// a mid-week export does not read as a week of missed sessions — but only
+// where the row is genuinely untouched. Typed numbers, an RPE or a note on a
+// future day mean the session moved earlier, and calling that `planned` would
+// throw away the one thing the row is telling us.
+const openStatus = (ctx: Context, evidence: boolean): Status =>
+  !evidence && ctx.date && ctx.date > ctx.today ? 'planned' : 'not_logged'
+
+// ---------------------------------------------------------------------------
+// Rows
+// ---------------------------------------------------------------------------
+
+// What the log actually holds for one set, split across the act_* columns so
+// the reader never has to parse "red×12" or "52.5x7" back apart. Weight and
+// reps always ride their own columns when present, whatever the measure says:
+// a measure switched after the fact must not silently drop a typed number.
+// act_value carries whatever is neither (a band colour, a time, calories, a
+// distance), and the e1RM follows the log sheet's own rule — computed only
+// where actual weight AND actual reps are both numeric.
+function actuals(set: SetLog, measure: MeasureType): Pick<Row, 'act_w' | 'act_r' | 'act_value' | 'e1rm'> {
+  const value =
+    measure === 'band' ? (set.band ?? '') : measure === 'weightReps' || measure === 'reps' || measure === 'freeText' ? '' : formatSet(set, measure)
+  const e = epley(set.w, set.r)
+  return { act_w: set.w, act_r: set.r, act_value: value, e1rm: e === null ? '' : String(e) }
+}
+
+// A bare number typed into a calories-measured actual gets its unit, so "45"
+// reads as "45 cal" rather than as an unlabelled quantity.
+function freeActual(entry: ExerciseLog | undefined, measure: MeasureType): string {
+  const actual = entry?.actual ?? ''
+  if (measure === 'cal' && /^\d+(\.\d+)?$/.test(actual.trim())) return `${actual.trim()} cal`
+  return actual
+}
+
+// The exercise name a row leads with. In-session additions and legacy swapped
+// slots say so, since neither is what the plan prescribed.
+function exerciseName(exercise: Exercise, entry: ExerciseLog | undefined, added: boolean): string {
+  if (added) return `${exercise.name} (added)`
+  if (entry?.swap) {
+    const swapName = catalogueEntry(entry.swap)?.name ?? entry.swap
+    return `${swapName} (was ${exercise.name})`
   }
+  return exercise.name
+}
+
+interface Context {
+  day: DayName
+  date: string
+  today: string
+  block: Block
+  skipped: boolean
+}
+
+// One exercise -> one row per programmed set, or a single row where there are
+// no programmed sets. Exercise-level fields (the rx, the RPE, the note) sit on
+// the first row of the group only, the same convention the log sheet uses for
+// repeated text.
+function exerciseRows(ctx: Context, exercise: Exercise, entry: ExerciseLog | undefined, added: boolean): Row[] {
   const measure = resolveMeasure(exercise, entry)
-  const sets = effectiveSets(exercise, entry)
-  const doneSets = sets.filter((s) => s.done)
-  // e1RM only means anything for weight-measured work (typed weights can
-  // linger after a switch to reps/band; don't export them as an e1RM).
-  const e1rm = measure === 'weightReps' ? estimate1RM(sets) : null
-  const setsStr = doneSets.map((s) => formatSet(s, measure)).filter(Boolean).join(', ')
-  return {
-    done: isExerciseDone(exercise, entry),
-    actual: (setsStr ? `${setsStr}${e1rm === null ? '' : ` (e1RM ${e1rm})`}` : '') || entry?.actual,
-    swap: entry?.swap,
-    rpe: entry?.rpe,
+  const base: Row = {
+    day: ctx.day,
+    date: ctx.date,
+    block_id: ctx.block.id,
+    block: ctx.block.title,
+    prio: String(ctx.block.priority),
+    wendler: ctx.block.wendler ? 'y' : '',
+    exercise_id: exercise.id,
+    exercise: exerciseName(exercise, entry, added),
+    measure,
+  }
+  const head: Row = {
+    plan_rx: exercise.rx,
+    rpe: entry?.rpe == null ? '' : String(entry.rpe),
     note: entry?.note,
   }
-}
 
-function exerciseDetail(name: string | null, e: ExerciseLog): string {
-  const parts: string[] = []
-  if (name) parts.push(name)
-  if (e.actual) parts.push(e.actual)
-  if (e.rpe != null) parts.push(`@${e.rpe}`)
-  if (e.note) parts.push(`"${e.note}"`)
-  return parts.join(' ')
-}
+  // Anything the user put on the exercise, wherever it ended up: enough to
+  // say the session happened even when nothing was ticked.
+  const noted = Boolean(entry?.rpe != null || entry?.note)
 
-// The label a detail line leads with. In-session additions always name
-// themselves ("devil press (added)"), as do legacy swapped slots
-// ("devil press (was muscle-up)"), even in single-exercise blocks where the
-// block title normally suffices.
-function detailLabel(ex: Exercise, e: ExerciseLog, single: boolean, added: boolean): string | null {
-  if (added) return `${ex.name.toLowerCase()} (added)`
-  if (e.swap) {
-    const swapName = (catalogueEntry(e.swap)?.name ?? e.swap).toLowerCase()
-    return `${swapName} (was ${ex.name.toLowerCase()})`
+  if (!exercise.sets) {
+    const actual = freeActual(entry, measure)
+    return [
+      {
+        ...base,
+        ...head,
+        act_value: actual,
+        status: ctx.skipped
+          ? 'skipped'
+          : entry?.done
+            ? 'completed'
+            : openStatus(ctx, noted || Boolean(actual)),
+      },
+    ]
   }
-  return single ? null : ex.name
+
+  // A free-text actual stored against a set-based exercise — legacy records,
+  // or an exercise the plan turned into set rows after it was logged. It has
+  // nowhere of its own to go, so it rides the first row rather than vanishing.
+  const stray = freeActual(entry, measure)
+
+  return effectiveSets(exercise, entry).map((set, i) => {
+    const act = actuals(set, measure)
+    if (i === 0 && stray && !act.act_value) act.act_value = stray
+    const typed = Boolean(act.act_w || act.act_r || act.act_value)
+    return {
+      ...base,
+      ...(i === 0 ? head : {}),
+      set: String(i + 1),
+      plan_w: exercise.sets?.[i]?.w,
+      plan_r: exercise.sets?.[i]?.r,
+      ...act,
+      status: ctx.skipped ? 'skipped' : set.done ? 'completed' : openStatus(ctx, typed || noted),
+    }
+  })
 }
 
-function blockSegment(block: Block, log: WeekLog): string | null {
-  const planned = block.exercises.map((ex) => ({ ex, added: false, log: exerciseView(ex, log.exercises[ex.id]) }))
-  const extras = log.added
-    .filter((a) => a.blockId === block.id)
-    .map((a) => {
-      const ex = addedToExercise(a)
-      return { ex, added: true, log: exerciseView(ex, log.exercises[a.id]) }
-    })
-  const entries = [...planned, ...extras]
-  // Additions surface as a detail line as soon as they're done, even with no
-  // typed values — "(added)" is itself the information.
-  const detailed = entries.filter(
-    (e) => e.log.actual || e.log.rpe != null || e.log.note || e.log.swap || (e.added && e.log.done),
-  )
-  const doneCount = entries.filter((e) => e.log.done).length
+// A block with no exercises at all — a rest day, or a run placeholder logged
+// in Runna. It still gets a row, so the day is not silently blank.
+const blockOnlyRow = (ctx: Context): Row => ({
+  day: ctx.day,
+  date: ctx.date,
+  block_id: ctx.block.id,
+  block: ctx.block.title,
+  prio: String(ctx.block.priority),
+  wendler: ctx.block.wendler ? 'y' : '',
+  status: ctx.skipped ? 'skipped' : openStatus(ctx, false),
+})
 
-  if (detailed.length > 0) {
-    const single = entries.length === 1
-    const details = detailed.map((e) => exerciseDetail(detailLabel(e.ex, e.log, single, e.added), e.log))
-    const rest = entries.filter((e) => !detailed.includes(e))
-    const suffix = rest.length > 0 && rest.every((e) => e.log.done) ? ', rest done' : ''
-    return `${short(block)}: ${details.join(', ')}${suffix}`
-  }
-  if (doneCount === 0) return null
-  if (doneCount === entries.length) return `${short(block)} done`
-  return `${short(block)} ${doneCount}/${entries.length} done`
-}
+// ---------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------
 
-function wendlerStatus(plan: WeekPlan, log: WeekLog): string {
-  const mains = plan.days.flatMap((d) => d.blocks).filter((b) => b.wendler)
-  if (mains.length === 0) return ''
-  const exercises = mains.flatMap((b) => b.exercises)
+function wendlerLine(plan: WeekPlan, log: WeekLog): string | null {
+  if (!plan.wendler) return null
+  const exercises = plan.days
+    .flatMap((d) => d.blocks)
+    .filter((b) => b.wendler)
+    .flatMap((b) => b.exercises)
+  const label = `C${plan.wendler.cycle}W${plan.wendler.week}`
+  if (exercises.length === 0) return `wendler=${label}`
   // A swapped slot means the programmed lift was NOT done — it must not count
-  // toward Wendler completion (the detail line still shows what replaced it).
+  // toward Wendler completion.
   const done = exercises.filter((ex) => {
     const entry = log.exercises[ex.id]
     return !entry?.swap && isExerciseDone(ex, entry)
   }).length
-  if (done === exercises.length) return ' complete'
-  if (done > 0) return ' in progress'
-  return ' not started'
+  const state = done === exercises.length ? 'complete' : done > 0 ? 'in_progress' : 'not_started'
+  return `wendler=${label} status=${state} main_lifts_done=${done}/${exercises.length}`
 }
 
+// Per-block roll-up, so the reader gets the shape of the week before it reads
+// a single row. Derived from the same rows, never counted separately.
+function blockTally(rows: Row[]): string {
+  const byBlock = new Map<string, Status[]>()
+  for (const r of rows) {
+    const key = `${r.day}/${r.block_id}`
+    const list = byBlock.get(key) ?? []
+    list.push(r.status as Status)
+    byBlock.set(key, list)
+  }
+  const counts: Record<string, number> = {}
+  for (const statuses of byBlock.values()) {
+    const done = statuses.filter((s) => s === 'completed').length
+    const key = statuses.includes('skipped')
+      ? 'skipped'
+      : done === statuses.length
+        ? 'completed'
+        : done > 0
+          ? 'partial'
+          : statuses.every((s) => s === 'planned')
+            ? 'planned'
+            : 'not_logged'
+    counts[key] = (counts[key] ?? 0) + 1
+  }
+  const order = ['completed', 'partial', 'skipped', 'not_logged', 'planned']
+  const parts = order.filter((k) => counts[k]).map((k) => `${counts[k]} ${k}`)
+  return `blocks=${byBlock.size} (${parts.join(', ') || 'none'})`
+}
+
+const LEGEND = [
+  '# One row per programmed set. Exercises with no programmed sets, and blocks with',
+  '# no exercises, get a single row with set blank. Exercise-level fields (plan_rx,',
+  '# rpe, note) are on the first row of each exercise only. Blank means no value,',
+  '# never zero. A "|" inside free text was replaced with "/".',
+  '# status: completed = ticked in the app | skipped = block skipped, reason above',
+  '#   | planned = day still ahead | not_logged = reached, nothing ticked.',
+  '#   Derived from ticks alone: act_* columns can carry typed values on a row',
+  '#   that was never ticked, and nothing here is inferred beyond that.',
+]
+
 export function buildExport(plan: WeekPlan, log: WeekLog): string {
-  const lines: string[] = []
-  lines.push(`WEEK EXPORT ${plan.weekId} (${plan.label})`)
+  const monday = weekMonday(plan.weekId)
+  const today = todayISO()
 
-  const state: string[] = []
-  if (plan.wendler) state.push(`Wendler C${plan.wendler.cycle}W${plan.wendler.week}${wendlerStatus(plan, log)}`)
-  if (plan.stages) state.push(plan.stages)
-  if (state.length > 0) lines.push(`STATE: ${state.join(' | ')}`)
-
-  const deferred = log.deferred.map((d) => {
-    const title = findBlock(plan, d.blockId)?.block.title.toLowerCase() ?? d.blockId
-    return `${title} (${d.from}, ${d.reason || 'no reason given'})`
-  })
-  lines.push(`SKIPPED: ${deferred.length > 0 ? deferred.join('; ') : 'none'}`)
-
-  if (log.maxDU != null) lines.push(`MAX DU FRESH: ${log.maxDU}`)
-  if (log.c2) lines.push(`C2: ${log.c2}`)
-
+  const rows: Row[] = []
   for (const day of DAY_NAMES) {
-    const placed = blocksForDay(plan, log, day).filter((p) => !p.deferral)
-    const segments = placed
-      .slice()
-      .sort((a, b) => a.block.priority - b.block.priority)
-      .map((p) => {
-        const seg = blockSegment(p.block, log)
-        return seg && p.movedFrom ? `${seg} (moved from ${p.movedFrom})` : seg
-      })
-      .filter((s): s is string => s !== null)
-    if (segments.length > 0) lines.push(`${day} ${segments.join(' | ')}`)
+    const date = dayDate(monday, day)
+    for (const placed of blocksForDay(plan, log, day).sort((a, b) => a.block.priority - b.block.priority)) {
+      const ctx: Context = { day, date, today, block: placed.block, skipped: Boolean(placed.deferral) }
+      const added = log.added.filter((a) => a.blockId === placed.block.id)
+      if (placed.block.exercises.length === 0 && added.length === 0) {
+        rows.push(blockOnlyRow(ctx))
+        continue
+      }
+      for (const ex of placed.block.exercises) rows.push(...exerciseRows(ctx, ex, log.exercises[ex.id], false))
+      for (const a of added) rows.push(...exerciseRows(ctx, addedToExercise(a), log.exercises[a.id], true))
+    }
   }
 
-  const notes = DAY_NAMES.filter((d) => log.sessionNotes[d]).map((d) => `${log.sessionNotes[d]} (${d})`)
-  if (notes.length > 0) lines.push(`NOTES: ${notes.join(' | ')}`)
+  const head: string[] = [FORMAT, `week_id=${plan.weekId}`, `label=${cell(plan.label)}`]
+  if (monday) {
+    head.push(`week_start=${dayDate(monday, 'Mon')}`, `week_end=${dayDate(monday, 'Sun')}`)
+  }
+  head.push(`exported=${today}`)
+  const wendler = wendlerLine(plan, log)
+  if (wendler) head.push(wendler)
+  if (plan.stages) head.push(`stages=${cell(plan.stages)}`)
+  if (plan.notes) head.push(`plan_notes=${cell(plan.notes)}`)
+  head.push(blockTally(rows))
 
-  return lines.join('\n')
+  const moved = Object.entries(log.moves).map(([blockId, to]) => {
+    const from = findBlock(plan, blockId)?.day
+    return `${blockId} ${from ?? '?'}->${to}`
+  })
+  head.push(`moved=${moved.length > 0 ? moved.join('; ') : 'none'}`)
+
+  const skipped = log.deferred.map((d) => `${d.blockId} (${d.from}) "${cell(d.reason) || 'no reason given'}"`)
+  head.push(`skipped=${skipped.length > 0 ? skipped.join('; ') : 'none'}`)
+
+  if (log.maxDU != null) head.push(`max_du_fresh=${log.maxDU}`)
+  if (log.c2) head.push(`c2=${cell(log.c2)}`)
+
+  const notes = DAY_NAMES.filter((d) => log.sessionNotes[d]).map((d) => `${d}="${cell(log.sessionNotes[d])}"`)
+  if (notes.length > 0) head.push(`session_notes=${notes.join(' ')}`)
+
+  return [...head, '', ...LEGEND, COLUMNS.join('|'), ...rows.map(renderRow)].join('\n')
 }

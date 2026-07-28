@@ -37,8 +37,9 @@ back into next week's planning chat.
 export default {
   weekId: '2026-wk28',
   label: '6-10 July',
-  wendler: { cycle: 1, week: 1 },            // optional; shown in header + STATE line
-  stages: 'BMU s1 | DU s1 | HSW s1 | T2B s1', // optional; echoed into the STATE line
+  wendler: { cycle: 1, week: 1 },            // optional; shown in the app header + the export
+  stages: 'BMU s1 | DU s1 | HSW s1 | T2B s1', // optional; echoed into the export's stages= line
+  notes: 'Revised 28 July: squat moved to Wed…', // optional; echoed into plan_notes=
   days: [
     {
       day: 'Mon', // Mon-Sun; omit days with nothing planned
@@ -131,24 +132,61 @@ chat where the fatigue rules live.
 
 ## The week export (the contract with the planning chat)
 
-The Week section builds a deterministic summary:
+The Week section builds a `key=value` header followed by **one pipe-delimited
+row per set**, shaped to drop straight into the planning chat's training log
+(whose natural key is `week_id + day + block_id + exercise_id + set_index`):
 
 ```
-WEEK EXPORT 2026-wk28 (6-10 July)
-STATE: Wendler C1W1 complete | BMU s1 | DU s1 | HSW s1 | T2B s1
-SKIPPED: clean and jerk (Thu, London trip)
-MAX DU FRESH: 34
-C2: 4x6min 2:05/500m
-Mon press: 52.5x7 @8 "strong" | shoulder physio done | BMU done
-NOTES: slept badly (Mon)
+ATHX WEEK EXPORT v2
+week_id=2026-wk31
+label=27 July - 2 August
+week_start=2026-07-27
+week_end=2026-08-02
+exported=2026-07-29
+wendler=C2W1 status=in_progress main_lifts_done=2/3
+stages=C2W1 5s week (TMs held 63/126/171) / Mon press done 52.5x6
+plan_notes=Revised 28 July: Tue missed, squat moved to Wed. …
+blocks=19 (2 completed, 3 partial, 1 skipped, 5 not_logged, 8 planned)
+moved=wed-squat Tue->Wed
+skipped=thu-oly (Thu) "work ran late"
+max_du_fresh=34
+c2=4x6min 2:05/500m
+session_notes=Mon="slept badly"
+
+# …legend…
+day|date|block_id|block|prio|wendler|exercise_id|exercise|measure|set|plan_w|plan_r|plan_rx|act_w|act_r|act_value|rpe|e1rm|status|note
+Mon|2026-07-27|press|5/3/1 Shoulder press|1|y|press-main|Strict press|weightReps|1|40|5|Warm-up 25/32.5/37.5…|40|5|||46.5|completed|
+Mon|2026-07-27|press|5/3/1 Shoulder press|1|y|press-main|Strict press|weightReps|3|52.5|5+||52.5|6|||63|completed|failed the 7th
+Wed|2026-07-29|wed-squat|Back squat 5/3/1 (C2W1)|1|y|squat-main|Back squat|weightReps|3|107.5|5+||107.5||||not_logged|
 ```
 
-Day lines run Mon–Sun and list blocks sorted by priority: a set-based exercise renders its
-completed sets plus the estimated 1RM when one is computable
-(`press: 40x5, 47.5x5, 52.5x7 (e1RM 64.5) @8`), a free-text exercise its
-actual, and a block that is just ticked renders `short done` (or `short 2/3
-done` when partial). Untouched blocks are omitted. `SKIPPED` is always
-present (`none` when empty); `MAX DU FRESH` / `C2` appear when set.
+Four properties make it unambiguous, and they are the whole point of the format:
+
+- **Every planned block is emitted**, whether or not anything was logged
+  against it. "Planned and not done" and "never planned" are different facts,
+  and only the app knows which is which.
+- **Nothing is inferred.** `status` is one of `completed` (ticked), `skipped`
+  (the block was skipped — the reason is on the header's `skipped=` line),
+  `planned` (the day is still ahead) or `not_logged` (reached, nothing ticked).
+  Typed values still ride the `act_*` columns on a `not_logged` row, so the
+  reader applies its own evidence rules rather than inheriting a guess. A row
+  with an RPE, a note or a typed number is never `planned`, even on a future
+  day — that means the session moved earlier.
+- **It is self-contained.** The prescription (`plan_w`, `plan_r`, `plan_rx`),
+  the ids, the priority and the `wendler` flag all travel with the actuals, so
+  the planning chat never has to fetch the week's plan module to resolve a row.
+- **Dates are derived** from the ISO week id, so day lines carry real calendar
+  dates rather than leaving them to be inferred from the free-text label.
+
+One row per programmed set; exercises with no programmed sets (and blocks with
+no exercises) get a single row with `set` blank. Exercise-level fields
+(`plan_rx`, `rpe`, `note`) sit on the first row of each exercise. Blank means no
+value, never zero, and a `|` inside free text is replaced with `/` so the column
+count is fixed at 20. In-session additions export as `<name> (added)`; legacy
+swapped slots as `<name> (was <planned>)`.
+
+Deterministic for a given plan, log **and export date** — the date only affects
+whether an untouched future day reports `planned` or `not_logged`.
 
 ## Sync design
 

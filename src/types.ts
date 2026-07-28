@@ -55,6 +55,7 @@ export interface WeekPlan {
   label: string // "6-10 July"
   wendler?: { cycle: number; week: number }
   stages?: string // skill-ladder state echoed into the export, e.g. "BMU s1 | DU s1"
+  notes?: string // the planner's free-text intent for the week; echoed into the export
   days: PlanDay[]
 }
 
