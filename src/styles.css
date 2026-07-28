@@ -357,11 +357,6 @@ select:focus {
   opacity: 0.75;
 }
 
-.deferred-note {
-  color: var(--muted);
-  margin: 8px 0;
-}
-
 .inline-form {
   display: flex;
   gap: 6px;

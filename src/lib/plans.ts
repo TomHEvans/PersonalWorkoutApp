@@ -31,11 +31,14 @@ export function findBlock(plan: WeekPlan, blockId: string): { block: Block; day:
   return null
 }
 
-export function findExercise(plan: WeekPlan, exerciseId: string): { exercise: Exercise; day: DayName } | null {
+export function findExercise(
+  plan: WeekPlan,
+  exerciseId: string,
+): { exercise: Exercise; block: Block; day: DayName } | null {
   for (const day of plan.days) {
     for (const block of day.blocks) {
       const exercise = block.exercises.find((e) => e.id === exerciseId)
-      if (exercise) return { exercise, day: day.day }
+      if (exercise) return { exercise, block, day: day.day }
     }
   }
   return null

@@ -347,12 +347,15 @@ export function buildExport(plan: WeekPlan, log: WeekLog): string {
 
   // Exercises skipped on their own, inside a session that otherwise ran. Read
   // off the rows so a skip against an exercise the plan no longer carries
-  // cannot show up here as a phantom.
+  // cannot show up here as a phantom. An exercise inside an already-skipped
+  // block is left out: its block going is the fact, and listing it twice would
+  // read as two separate decisions.
+  const skippedBlocks = new Set(log.deferred.map((d) => d.blockId))
   const seen = new Set<string>()
   const skippedExercises: string[] = []
   for (const r of rows) {
     const id = String(r.exercise_id ?? '')
-    if (!id || seen.has(id) || !log.exercises[id]?.skipped) continue
+    if (!id || seen.has(id) || skippedBlocks.has(String(r.block_id)) || !log.exercises[id]?.skipped) continue
     seen.add(id)
     skippedExercises.push(`${id} (${r.day}) "${cell(log.exercises[id].skipReason) || 'no reason given'}"`)
   }

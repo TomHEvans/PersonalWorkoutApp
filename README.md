@@ -119,24 +119,33 @@ log so they sync across devices:
   (✕), and exports as `<name> (added)`. (This replaced the earlier per-slot ⇄
   swap; legacy swapped logs still render and export as `x (was y)`.)
 
-Block actions:
+**Move** reshuffles a block to any other day of the week, weekend included.
 
-- **Skip** drops the block for this week, with a reason. Skipped blocks stay
-  visible on their home day as placeholders (nothing lost silently), appear in
-  the export's `skipped=` line, and can be restored. (Stored under the log's
-  `deferred` field for data compatibility.)
-- **Move** reshuffles a block to any other day of the week, weekend included.
+### Skipping
 
-Individual exercises have their own **skip** pill next to the type tag, for
-dropping one movement without dropping the session around it — a tweaky
-shoulder, a machine someone else is on. It costs one tap; the reason is
-optional and asked for afterwards, so nothing stands between you and the next
-set. A skipped exercise stays on the day as a struck-through placeholder, keeps
-whatever was already logged against it (restoring brings the ticks and numbers
-back untouched), never counts toward completion or the Wendler roll-up, and
-appears in both the Week section's **Skipped** list and the export's
-`skipped_exercises=` line. Skipped beats done: if it is skipped, that is what
-the export reports, whatever is ticked underneath.
+Skipping works at two scopes — **Skip block** against the block title, and
+**Skip** on any single exercise, for dropping one movement without dropping the
+session around it (a tweaky shoulder, a machine someone else is on). They are
+the same gesture, and behave identically, so the scope is the only thing you
+have to think about — and it is in the words rather than left to be inferred
+from where the control sits:
+
+- **One tap skips.** The reason is optional and asked for afterwards, so
+  nothing stands between you and the next set. It stays editable for as long as
+  the thing is skipped.
+- **Nothing is lost.** A skipped block or exercise stays where it was as a
+  placeholder, keeping whatever was already logged against it — **Restore**
+  brings the ticks and numbers back untouched.
+- **Skipped beats done.** A skipped exercise never counts toward completion or
+  the Wendler roll-up, and the export reports `skipped` whatever is ticked
+  underneath (the typed values still ride the `act_*` columns).
+- Both appear in the Week section's **Skipped** list and in the export, on the
+  `skipped=` and `skipped_exercises=` lines respectively. An exercise skipped
+  inside an already-skipped block is not listed separately — the block going is
+  the fact, and reporting it twice would read as two separate decisions.
+
+Block skips are stored under the log's `deferred` field for data compatibility;
+exercise skips under the exercise's own `skipped` / `skipReason`.
 
 "Compress week" judgment is never done in-app; that belongs to the planning
 chat where the fatigue rules live.

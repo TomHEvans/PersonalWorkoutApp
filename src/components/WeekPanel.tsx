@@ -22,15 +22,19 @@ export default function WeekPanel({ plan, log, onQuick, onRestore, onUnskipExerc
 
   // Exercises skipped on their own. An addition names itself from the
   // catalogue; anything the plan no longer carries falls back to its id
-  // rather than vanishing from the list.
+  // rather than vanishing from the list. Exercises inside a block that was
+  // itself skipped are left out — the block above them already says it.
+  const skippedBlocks = new Set(log.deferred.map((d) => d.blockId))
   const skippedExercises = Object.entries(log.exercises)
     .filter(([, e]) => e.skipped)
     .map(([id, e]) => {
       const added = log.added.find((a) => a.id === id)
       const found = findExercise(plan, id)
+      const blockId = added?.blockId ?? found?.block.id
       const name = added ? (catalogueEntry(added.exerciseId)?.name ?? added.exerciseId) : found?.exercise.name
-      return { id, name: name ?? id, day: found?.day, reason: e.skipReason }
+      return { id, name: name ?? id, day: found?.day, reason: e.skipReason, blockId }
     })
+    .filter((e) => !e.blockId || !skippedBlocks.has(e.blockId))
 
   const copy = async () => {
     if (await copyText(text)) {

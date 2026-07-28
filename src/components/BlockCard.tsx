@@ -323,7 +323,7 @@ function ExerciseRow({
               aria-label={`Skip ${displayName}`}
               onClick={() => onChange({ skipped: true })}
             >
-              skip
+              Skip
             </button>
             {onRemove && (
               <button type="button" className="remove-added" aria-label="Remove added exercise" onClick={onRemove}>
@@ -415,31 +415,36 @@ export default function BlockCard({
   onRemoveAdded,
 }: Props) {
   const { block, deferral, movedFrom, homeDay } = placed
-  const [deferring, setDeferring] = useState(false)
-  const [reason, setReason] = useState('')
   const [moving, setMoving] = useState(false)
   const [adding, setAdding] = useState(false)
   const addedHere = log.added.filter((a) => a.blockId === block.id)
 
+  // Skipping a block and skipping one exercise are the same gesture at two
+  // scopes, so they behave identically: one tap to skip, the reason asked for
+  // afterwards and editable for as long as it stays skipped, Restore always
+  // one tap away. Only the labels differ — "Skip block" against the block
+  // title, plain "Skip" on the exercise — so the scope is in the words rather
+  // than left to be inferred from where the control sits.
   if (deferral) {
     return (
       <div className={`block p${block.priority} deferred-block`}>
         <div className="block-head">
           <span className={`prio p${block.priority}`}>P{block.priority}</span>
           <h3>{block.title}</h3>
+          <span className="skipped-tag">skipped</span>
         </div>
-        <p className="deferred-note">Skipped — {deferral.reason || 'no reason given'}</p>
-        <button type="button" className="btn small" onClick={() => onRestore(block.id)}>
-          Restore
-        </button>
+        <div className="inline-form">
+          <input
+            placeholder="Reason (optional)"
+            value={deferral.reason}
+            onChange={(e) => onDefer(block.id, deferral.from, e.target.value)}
+          />
+          <button type="button" className="btn small" onClick={() => onRestore(block.id)}>
+            Restore
+          </button>
+        </div>
       </div>
     )
-  }
-
-  const confirmDefer = () => {
-    onDefer(block.id, currentDay, reason.trim())
-    setDeferring(false)
-    setReason('')
   }
 
   return (
@@ -448,32 +453,15 @@ export default function BlockCard({
         <span className={`prio p${block.priority}`}>P{block.priority}</span>
         <h3>{block.title}</h3>
         <div className="block-actions">
-          <button type="button" className="btn tiny" onClick={() => (setMoving(!moving), setDeferring(false))}>
+          <button type="button" className="btn tiny" onClick={() => setMoving(!moving)}>
             Move
           </button>
-          <button type="button" className="btn tiny" onClick={() => (setDeferring(!deferring), setMoving(false))}>
-            Skip
+          <button type="button" className="btn tiny" onClick={() => onDefer(block.id, currentDay, '')}>
+            Skip block
           </button>
         </div>
       </div>
       {movedFrom && <span className="moved-tag">moved from {movedFrom}</span>}
-
-      {deferring && (
-        <div className="inline-form">
-          <input
-            placeholder="Reason (e.g. London trip)"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            autoFocus
-          />
-          <button type="button" className="btn small primary" onClick={confirmDefer}>
-            Skip
-          </button>
-          <button type="button" className="btn small" onClick={() => setDeferring(false)}>
-            Cancel
-          </button>
-        </div>
-      )}
 
       {moving && (
         <div className="inline-form days">
