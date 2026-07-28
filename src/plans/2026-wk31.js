@@ -37,6 +37,15 @@
 // note-tue-moved (the missed-session marker), athx-endurance-sim,
 // metcon-wk31b and easy-run-75 — each carries an explicit `measure`, so none
 // depends on a catalogue entry.
+//
+// SAME-WEEK REPEATS: the log is keyed by exercise id alone (WeekLog.exercises
+// is a flat Record<id, ExerciseLog>), so a movement that runs twice in one
+// week MUST use distinct ids or both sessions share one entry and the second
+// renders as already complete. C2B, the MU transition drill and the
+// straight-arm pulldown all run Mon AND Thu here, so Thursday's take the
+// wk29/wk30 "-2" suffix (c2b-2, mu-transition-2, straight-arm-pulldown-2);
+// baseId() strips a trailing -<n> on catalogue lookup, so they still resolve
+// to the same catalogue entry and stay queryable across weeks.
 export default {
   weekId: '2026-wk31',
   label: '27 July - 2 August',
@@ -254,14 +263,18 @@ export default {
           priority: 2,
           exercises: [
             {
-              id: 'c2b',
+              // "-2" suffix: second session of these movements this week (Mon
+              // was the first). Same-week repeats need distinct ids or they
+              // share one log entry — wk29/wk30 convention; baseId() strips
+              // the suffix so the catalogue entry still resolves.
+              id: 'c2b-2',
               name: 'Strict chest-to-bar pull-up',
               rx: '4 rounds of 3, pause at the top. Drop to 4x2 as soon as the chest touch degrades.',
               measure: 'reps',
               sets: [{ r: 3 }, { r: 3 }, { r: 3 }, { r: 3 }],
             },
             {
-              id: 'mu-transition',
+              id: 'mu-transition-2',
               name: 'Muscle-up transition drill',
               rx: '4 rounds of 3 (banded rings, feet-assisted, or jumping bar MU negatives)',
               measure: 'reps',
@@ -296,7 +309,9 @@ export default {
           priority: 2,
           exercises: [
             {
-              id: 'straight-arm-pulldown',
+              // "-2": second straight-arm pulldown of the week (Mon's upper
+              // accessories was the first). See the c2b-2 note above.
+              id: 'straight-arm-pulldown-2',
               name: 'Straight-arm pulldown',
               rx: '3x12 at 40.5 kg. FIX: fix a slight elbow bend and never let it change, hinge forward 15-20 degrees, ribs down, start at eye level, drive the whole arm in an arc to the thighs, squeeze the lat for 1 sec at the bottom. Use a rope if a straight bar keeps turning it into a triceps pushdown. Stay light.',
               measure: 'weightReps',
