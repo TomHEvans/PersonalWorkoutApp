@@ -220,6 +220,12 @@ whether an untouched future day reports `planned` or `not_logged`.
 - **Offline** at the gym is fine; unconfirmed edits are flagged and flushed
   when connectivity returns. The service worker keeps the app shell loading
   offline (PWA, installable).
+- **Service worker cache rule**: JS/CSS are content-hashed, so a deploy renames
+  them and the cache follows. The icons and the manifest are **not** hashed and
+  are served cache-first, so changing one means bumping `VERSION` in
+  [`public/sw.js`](public/sw.js) — `activate` only drops caches whose name no
+  longer matches, and without the bump an installed PWA serves the old file
+  indefinitely.
 - **Versioning rule**: any structural change to the log shape bumps the
   localStorage key version (`v1` → … → `v8`) so stale state never merges
   into new code. KV records are unversioned; v2-era records were repaired by
@@ -285,7 +291,13 @@ secret is missing, every API request returns 401 until it is set.
   ([`functions/api/log/[weekId].ts`](functions/api/log/%5BweekId%5D.ts)) shares
   the same handler if you ever deploy as a Pages project instead.
 - **Cloudflare KV**: one namespace, one key per week.
-- Hand-written **service worker** + manifest for PWA / offline.
+- Hand-written **service worker** + manifest for PWA / offline. The app icon (a
+  lifter with a barbell overhead, in the app's accent on the ink background) is
+  defined geometrically in [`scripts/gen-icons.mjs`](scripts/gen-icons.mjs) as
+  capsules and rendered by a hand-rolled PNG encoder, so `npm run icons` needs
+  no fonts or image libraries and produces identical output anywhere. The mark
+  is scaled by its true ink radius, so the maskable safe zone holds even if the
+  figure is redrawn.
 
 ## Deploy
 
