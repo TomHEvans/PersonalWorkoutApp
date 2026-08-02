@@ -50,6 +50,10 @@ const CATALOGUE: Record<string, CatalogueExercise> = {
   'c2-test': { name: 'C2 bike threshold test', measures: ['freeText', 'time'] },
   'run-easy': { name: 'Easy run', measures: ['freeText'] },
   'run-long': { name: 'Long run', measures: ['freeText'] },
+  // New in wk32: runs came back into the app as blocks (Mon 35-40 min, Tue 45
+  // min). Distinct from run-easy, which wk28-wk30 used while running lived in
+  // Runna — the two are not merged so neither week's history moves.
+  'easy-run': { name: 'Easy run', measures: ['freeText', 'time', 'distance'] },
 
   // ---- common hybrid movements (seed; not yet in a week) ----
   'front-squat': { name: 'Front squat', measures: ['weightReps'] },
