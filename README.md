@@ -227,7 +227,7 @@ whether an untouched future day reports `planned` or `not_logged`.
   longer matches, and without the bump an installed PWA serves the old file
   indefinitely.
 - **Versioning rule**: any structural change to the log shape bumps the
-  localStorage key version (`v1` → … → `v8`) so stale state never merges
+  localStorage key version (`v1` → … → `v9`) so stale state never merges
   into new code. KV records are unversioned; v2-era records were repaired by
   the one-shot v2 → v3 migration (`src/lib/migrate.ts`) and rewritten clean.
   The repair never runs on v3+ data — a typed `0` weight legitimately means
@@ -236,7 +236,14 @@ whether an untouched future day reports `planned` or `not_logged`.
   per-set time/cal/distance; `v6` per-block added exercises; `v7` stored set
   values as coerced clean numbers (dropping corrupted legacy ones); `v8` the
   per-exercise skip — all purely additive beyond v7's scrub, so those
-  migrations just move the record forward.
+  migrations just move the record forward. `v9` rekeyed `exercises` from the
+  bare exercise id to `blockId::exerciseId`
+  ([`src/lib/logKeys.ts`](src/lib/logKeys.ts)), so a movement programmed twice
+  in one week keeps one id and still logs independently on each day. That one
+  is **not** additive, and because the KV copy is unversioned and shared,
+  `scopeLog()` rekeys on every read — local and remote alike — rather than
+  only on promotion. It is idempotent; an id the plan no longer carries keeps
+  its unscoped key rather than being dropped.
 
 ## The log API
 
@@ -254,14 +261,17 @@ var; mismatches return `401`. KV layout: key `log:<weekId>` holds:
 
 ```js
 {
+  // keyed "<blockId>::<exerciseId>" — the block is part of the key, so the same
+  // movement programmed on two days logs independently under one exercise id
   exercises: {
     // set-based: index-aligned with the plan's sets; empty w/r = untouched (done as prescribed)
-    "press-main": { sets: [ { w: "40", r: "5", done: true }, { w: "47.5", r: "5", done: true },
-                            { w: "52.5", r: "7", done: true } ], rpe: 8, note: "strong" },
-    // free-text: runs, C2, anything without programmed sets
-    "easy-run": { done: true, actual: "7.5km 42:10", rpe: 6 },
+    "press::press-main": { sets: [ { w: "40", r: "5", done: true }, { w: "47.5", r: "5", done: true },
+                                   { w: "52.5", r: "7", done: true } ], rpe: 8, note: "strong" },
+    // free-text: runs, C2, anything without programmed sets. Same id, two blocks, two entries.
+    "mon-run::easy-run": { done: true, actual: "38:20 z2" , rpe: 5 },
+    "tue-long-run::easy-run": { done: true, actual: "45:00 z2-3", rpe: 6 },
     // skipped on its own; anything logged before the skip is kept and restored with it
-    "scap": { skipped: true, skipReason: "shoulder tight" }
+    "shoulder-physio::scap": { skipped: true, skipReason: "shoulder tight" }
   },
   sessionNotes: { "Mon": "slept badly" },
   deferred: [ { blockId: "cj", from: "Thu", reason: "London trip" } ], // whole-block skips

@@ -3,6 +3,7 @@ import type { WeekLog, WeekPlan } from '../types'
 import { buildExport } from '../lib/export'
 import { copyText } from '../lib/clipboard'
 import { findBlock, findExercise } from '../lib/plans'
+import { splitKey } from '../lib/logKeys'
 import { catalogueEntry } from '../catalogue'
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
   log: WeekLog
   onQuick: (patch: Partial<Pick<WeekLog, 'maxDU' | 'c2'>>) => void
   onRestore: (blockId: string) => void
-  onUnskipExercise: (exerciseId: string) => void
+  onUnskipExercise: (key: string) => void // log key, exerciseKey(blockId, exerciseId)
 }
 
 // The weekly tab: quick fields, what was skipped, and the export preview.
@@ -24,15 +25,20 @@ export default function WeekPanel({ plan, log, onQuick, onRestore, onUnskipExerc
   // catalogue; anything the plan no longer carries falls back to its id
   // rather than vanishing from the list. Exercises inside a block that was
   // itself skipped are left out — the block above them already says it.
+  // Keys are blockId::exerciseId, so the block comes off the key rather than
+  // off the first plan match — which is what lets a movement programmed on
+  // two days report the day it was actually skipped on.
   const skippedBlocks = new Set(log.deferred.map((d) => d.blockId))
   const skippedExercises = Object.entries(log.exercises)
     .filter(([, e]) => e.skipped)
-    .map(([id, e]) => {
-      const added = log.added.find((a) => a.id === id)
-      const found = findExercise(plan, id)
-      const blockId = added?.blockId ?? found?.block.id
+    .map(([key, e]) => {
+      const { blockId: keyed, exerciseId } = splitKey(key)
+      const added = log.added.find((a) => a.id === exerciseId)
+      const found = findExercise(plan, exerciseId)
+      const blockId = keyed ?? added?.blockId ?? found?.block.id
       const name = added ? (catalogueEntry(added.exerciseId)?.name ?? added.exerciseId) : found?.exercise.name
-      return { id, name: name ?? id, day: found?.day, reason: e.skipReason, blockId }
+      const day = blockId ? findBlock(plan, blockId)?.day : found?.day
+      return { key, name: name ?? exerciseId, day, reason: e.skipReason, blockId }
     })
     .filter((e) => !e.blockId || !skippedBlocks.has(e.blockId))
 
@@ -86,7 +92,7 @@ export default function WeekPanel({ plan, log, onQuick, onRestore, onUnskipExerc
           </div>
         ))}
         {skippedExercises.map((e) => (
-          <div key={e.id} className="deferred-row">
+          <div key={e.key} className="deferred-row">
             <div>
               <strong>{e.name}</strong>
               <span className="muted">
@@ -94,7 +100,7 @@ export default function WeekPanel({ plan, log, onQuick, onRestore, onUnskipExerc
                 — exercise{e.day ? `, ${e.day}` : ''}, {e.reason || 'no reason given'}
               </span>
             </div>
-            <button type="button" className="btn small" onClick={() => onUnskipExercise(e.id)}>
+            <button type="button" className="btn small" onClick={() => onUnskipExercise(e.key)}>
               Restore
             </button>
           </div>

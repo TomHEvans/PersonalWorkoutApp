@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { DayName, ExerciseLog, WeekLog } from './types'
 import { DAY_NAMES, currentWeekId, getPlan, isWeekend, todayName, weekIds } from './lib/plans'
 import { makeAdded } from './lib/added'
+import { exerciseKey } from './lib/logKeys'
 import { getToken } from './lib/api'
 import { useLog } from './hooks/useLog'
 import TokenGate from './components/TokenGate'
@@ -21,10 +22,13 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
 
   if (status === 'auth') return <TokenGate denied onDone={onAuthRetry} />
 
-  const onExercise = (exerciseId: string, patch: Partial<ExerciseLog>) =>
+  // `key` is exerciseKey(blockId, exerciseId) — see src/lib/logKeys.ts. The
+  // block is part of the key so a movement programmed on two days this week
+  // logs independently on each while keeping one id.
+  const onExercise = (key: string, patch: Partial<ExerciseLog>) =>
     update((prev) => ({
       ...prev,
-      exercises: { ...prev.exercises, [exerciseId]: { ...prev.exercises[exerciseId], ...patch } },
+      exercises: { ...prev.exercises, [key]: { ...prev.exercises[key], ...patch } },
     }))
 
   const onDefer = (blockId: string, from: DayName, reason: string) =>
@@ -55,7 +59,8 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
   const onRemoveAdded = (addedId: string) =>
     update((prev) => {
       const exercises = { ...prev.exercises }
-      delete exercises[addedId]
+      const blockId = prev.added.find((a) => a.id === addedId)?.blockId
+      if (blockId) delete exercises[exerciseKey(blockId, addedId)]
       return { ...prev, exercises, added: prev.added.filter((a) => a.id !== addedId) }
     })
 
@@ -65,9 +70,9 @@ function Tracker({ onAuthRetry }: { onAuthRetry: () => void }) {
   const onQuick = (patch: Partial<Pick<WeekLog, 'maxDU' | 'c2'>>) => update((prev) => ({ ...prev, ...patch }))
 
   // Restoring from the Week panel clears the reason with the skip, so a
-  // re-skip does not silently inherit last time's excuse.
-  const onUnskipExercise = (exerciseId: string) =>
-    onExercise(exerciseId, { skipped: false, skipReason: undefined })
+  // re-skip does not silently inherit last time's excuse. Takes the log key,
+  // which is what the panel reads its list off.
+  const onUnskipExercise = (key: string) => onExercise(key, { skipped: false, skipReason: undefined })
 
   const today = todayName()
 

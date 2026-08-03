@@ -5,6 +5,7 @@ import { DAY_NAMES } from '../lib/plans'
 import { FREE_MEASURES, SET_MEASURES, allExercises, catalogueEntry, resolveMeasure } from '../catalogue'
 import type { CatalogueListing } from '../catalogue'
 import { addedToExercise } from '../lib/added'
+import { exerciseKey } from '../lib/logKeys'
 import { BANDS, bandColor } from '../lib/bands'
 import { coerceReps, coerceWeight, effectiveSets, estimate1RM, isExerciseDone, sanitizeReps, sanitizeWeight } from '../lib/sets'
 
@@ -43,7 +44,7 @@ interface Props {
   placed: PlacedBlock
   currentDay: DayName
   log: WeekLog
-  onExercise: (exerciseId: string, patch: Partial<ExerciseLog>) => void
+  onExercise: (key: string, patch: Partial<ExerciseLog>) => void // key is exerciseKey(blockId, exerciseId)
   onDefer: (blockId: string, from: DayName, reason: string) => void
   onRestore: (blockId: string) => void
   onMove: (blockId: string, to: DayName | null) => void
@@ -481,20 +482,22 @@ export default function BlockCard({
         </div>
       )}
 
+      {/* Entries are keyed by block AND exercise, so a movement programmed
+          twice in one week logs independently on each day under one id. */}
       {block.exercises.map((ex) => (
         <ExerciseRow
           key={ex.id}
           exercise={ex}
-          entry={log.exercises[ex.id] ?? {}}
-          onChange={(patch) => onExercise(ex.id, patch)}
+          entry={log.exercises[exerciseKey(block.id, ex.id)] ?? {}}
+          onChange={(patch) => onExercise(exerciseKey(block.id, ex.id), patch)}
         />
       ))}
       {addedHere.map((a) => (
         <ExerciseRow
           key={a.id}
           exercise={addedToExercise(a)}
-          entry={log.exercises[a.id] ?? {}}
-          onChange={(patch) => onExercise(a.id, patch)}
+          entry={log.exercises[exerciseKey(block.id, a.id)] ?? {}}
+          onChange={(patch) => onExercise(exerciseKey(block.id, a.id), patch)}
           onRemove={() => onRemoveAdded(a.id)}
         />
       ))}

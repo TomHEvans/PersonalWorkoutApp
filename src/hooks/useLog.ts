@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SyncStatus, WeekLog } from '../types'
 import { ApiError, getLog, putLog } from '../lib/api'
 import { emptyLog } from '../lib/log'
+import { scopeLog } from '../lib/logKeys'
+import { getPlan } from '../lib/plans'
 import { isDirty, readLocal, setDirty, writeLocal } from '../lib/storage'
 
 const PUT_DEBOUNCE_MS = 1200 // KV allows ~1 write/sec per key
@@ -63,7 +65,11 @@ export function useLog(weekId: string) {
     setStatus('pending')
     ;(async () => {
       try {
-        const remote = await getLog(weekId)
+        // KV holds one record per week with no version of its own, so a copy
+        // written before entries were block-scoped can arrive at any time.
+        // Rekey it on the way in, exactly as readLocal does.
+        const raw = await getLog(weekId)
+        const remote = raw && scopeLog(getPlan(weekId), raw)
         if (cancelled) return
         if (remote && remote.updatedAt > latest.current.updatedAt) {
           setLog(remote)
