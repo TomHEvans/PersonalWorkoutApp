@@ -15,29 +15,34 @@
 // Physio placement: shoulder programme as Monday's press warm-up; crab walks as
 // Wednesday's squat warm-up; knee block once, Tuesday.
 //
-// Running per 09 Running Plan: two runs, Mon 35-40 min and Tue 45 min, both
+// Running per 09 Running Plan: two runs, Tue 45 min and Sat 35-40 min, both
 // zone 2 to 3 on the Garmin. Distance is an output, not a target.
+//
+// Monday is press only. Tom cannot double up on a Monday — it is always a
+// heavy meetings day — so the 35-40 min run moved to Saturday, which was rest.
+// Sunday is the week's only rest day.
 //
 // New this week: toes-to-bar enters as skill work in the muscle up block.
 //
 // ID note: ids are reused across weeks so the KV log stays queryable by
 // exercise id. toes-to-bar and easy-run are new to the plan; easy-run is added
-// to the catalogue (toes-to-bar was already there). easy-run runs BOTH Mon and
-// Tue under the SAME id, separated only by block id (mon-run / tue-long-run) —
-// deliberately NOT the wk29-wk31 "-2" suffix, which split the history.
-// That now works as written: log entries are keyed by blockId::exerciseId
-// (src/lib/logKeys.ts), so the two runs log independently under one id. This
-// week shipped one day ahead of that change, so a log written on 3 Aug before
-// it landed has a single shared easy-run entry; scopeLog() puts that entry on
-// Monday and leaves Tuesday empty on first read.
+// to the catalogue (toes-to-bar was already there). easy-run runs BOTH Tue and
+// Sat under the SAME id, separated only by block id (tue-long-run / sat-run) —
+// deliberately NOT the wk29-wk31 "-2" suffix, which split the history. That
+// works as written: log entries are keyed by blockId::exerciseId
+// (src/lib/logKeys.ts), so the two runs log independently under one id.
+//
+// A log written against the earlier layout keeps its mon-run::easy-run entry.
+// Nothing reads it now that the block is gone, and nothing deletes it either —
+// it sits in the record rather than being silently dropped.
 export default {
   weekId: '2026-wk32',
   label: '3 August - 9 August',
   wendler: { cycle: 2, week: 2 },
   stages:
-    'C2W2 3s week (TMs held 63/126/171) | AMRAPs uncapped, 1-2 reps in reserve | Mon press + shoulder physio + run 35-40 min | Tue run 45 min + full knee block | Wed squat + crab walks | Thu deadlift, hook grip from the warm-ups | Fri ATHX endurance sim (STILL no baseline, 3rd attempt) + metcon | toes-to-bar new in the muscle up block',
+    'C2W2 3s week (TMs held 63/126/171) | AMRAPs uncapped, 1-2 reps in reserve | Mon press + shoulder physio, no run (heavy meetings day) | Tue run 45 min + full knee block | Wed squat + crab walks | Thu deadlift, hook grip from the warm-ups | Fri ATHX endurance sim (STILL no baseline, 3rd attempt) + metcon | Sat run 35-40 min | Sun rest | toes-to-bar new in the muscle up block',
   notes:
-    'Week 31 did not finish: the endurance simulation has been scheduled twice and never run, the metcon was deferred twice, and the knee block did not happen at all. Friday priority order is endurance simulation first, metcon second — cut the metcon if time is short, the baseline is the point. TMs held at 63/126/171 by decision on 2 Aug 2026; do not raise them mid-cycle. 3+ means AMRAP with 1 to 2 reps in reserve and no rep cap; double figures on squat and deadlift top sets are expected. Runs are Garmin zone 2 to 3 by time, not distance.',
+    'Week 31 did not finish: the endurance simulation has been scheduled twice and never run, the metcon was deferred twice, and the knee block did not happen at all. Friday priority order is endurance simulation first, metcon second — cut the metcon if time is short, the baseline is the point. TMs held at 63/126/171 by decision on 2 Aug 2026; do not raise them mid-cycle. 3+ means AMRAP with 1 to 2 reps in reserve and no rep cap; double figures on squat and deadlift top sets are expected. Runs are Garmin zone 2 to 3 by time, not distance. Monday is press only: Tom cannot double up on a Monday, so the 35-40 min run sits on Saturday and Sunday is the only rest day.',
   days: [
     {
       day: 'Mon',
@@ -132,22 +137,6 @@ export default {
             },
           ],
         },
-        {
-          id: 'mon-run',
-          title: 'Easy run',
-          short: 'Easy run',
-          priority: 3,
-          exercises: [
-            {
-              // Same id as Tuesday's run, separated by block id only — see the
-              // ID note at the top of this file.
-              id: 'easy-run',
-              name: 'Easy run',
-              rx: '35 to 40 minutes, heart rate zone 2 to 3',
-              measure: 'freeText',
-            },
-          ],
-        },
       ],
     },
     {
@@ -160,8 +149,8 @@ export default {
           priority: 3,
           exercises: [
             {
-              // Same id as Monday's run, separated by block id only — see the
-              // ID note at the top of this file.
+              // Same id as Saturday's run, separated by block id only — see
+              // the ID note at the top of this file.
               id: 'easy-run',
               name: 'Easy run',
               rx: '45 minutes, heart rate zone 2 to 3',
@@ -347,7 +336,24 @@ export default {
     },
     {
       day: 'Sat',
-      blocks: [{ id: 'rest-sat', title: 'Rest', short: 'Rest', priority: 3, exercises: [] }],
+      blocks: [
+        {
+          id: 'sat-run',
+          title: 'Easy run',
+          short: 'Easy run',
+          priority: 3,
+          exercises: [
+            {
+              // Same id as Tuesday's run, separated by block id only — see the
+              // ID note at the top of this file.
+              id: 'easy-run',
+              name: 'Easy run',
+              rx: '35 to 40 minutes, heart rate zone 2 to 3',
+              measure: 'freeText',
+            },
+          ],
+        },
+      ],
     },
     {
       day: 'Sun',
