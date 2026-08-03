@@ -1,12 +1,14 @@
 import type { WeekLog } from '../types'
 import { normalize } from './log'
 import { getPlan } from './plans'
+import { scopeLog } from './logKeys'
 import { repairLog } from './migrate'
 
 // localStorage is the local-first copy: every change lands here immediately,
 // the KV PUT follows debounced. Any structural change to the log shape bumps
 // this version (v1 -> ... -> v5) so stale state never merges into new code.
-const VERSION = 'athx-log-v8' // v8: per-exercise skip (skipped + skipReason)
+const VERSION = 'athx-log-v9' // v9: entries keyed by blockId::exerciseId
+const V8 = 'athx-log-v8' // v8: per-exercise skip (skipped + skipReason)
 const V7 = 'athx-log-v7' // v7: set values stored as coerced clean numbers; corrupted legacy values dropped
 const V6 = 'athx-log-v6' // v6: per-block added exercises
 const V5 = 'athx-log-v5' // v5: per-exercise swap override + per-set time/cal/dist
@@ -16,28 +18,34 @@ const V2 = 'athx-log-v2' // v2 pre-loaded programmed values into the set rows
 const logKey = (weekId: string) => `${VERSION}:${weekId}`
 const dirtyKey = (weekId: string) => `${VERSION}:dirty:${weekId}`
 
+// Scoping runs on the CURRENT version's record too, not just on promotion: KV
+// is one shared record with no version of its own, so a log another client
+// wrote with pre-scoping keys can arrive here at any time. scopeLog is
+// idempotent, so this costs a key scan on an already-scoped record.
 export function readLocal(weekId: string): WeekLog | null {
   try {
     const raw = localStorage.getItem(logKey(weekId))
-    if (raw) return normalize(JSON.parse(raw))
+    if (raw) return scopeLog(getPlan(weekId), normalize(JSON.parse(raw)))
     return migrateLegacy(weekId)
   } catch {
     return null
   }
 }
 
-// One-shot migration to the current version. v7/v6/v5/v4/v3 -> v8 move the
-// record through normalize(), which also scrubs set values to the coerced
-// clean-number contract; v2 additionally gets the plan-aware repair for the
-// pre-loaded/concatenated values first. Nothing to convert for the skip field
-// itself: an absent `skipped` already means "not skipped".
+// One-shot migration to the current version. v8/v7/v6/v5/v4/v3 -> v9 move the
+// record through normalize(), which scrubs set values to the coerced
+// clean-number contract, and then scopeLog, which rekeys entries onto their
+// block; v2 additionally gets the plan-aware repair for the pre-loaded/
+// concatenated values. The repair is plan-driven and looks entries up by the
+// scoped key, so it runs AFTER scoping, not before.
 function migrateLegacy(weekId: string): WeekLog | null {
-  for (const from of [V7, V6, V5, V4, V3]) {
+  const plan = getPlan(weekId)
+  for (const from of [V8, V7, V6, V5, V4, V3]) {
     const raw = localStorage.getItem(`${from}:${weekId}`)
-    if (raw) return promote(weekId, normalize(JSON.parse(raw)), from)
+    if (raw) return promote(weekId, scopeLog(plan, normalize(JSON.parse(raw))), from)
   }
   const v2raw = localStorage.getItem(`${V2}:${weekId}`)
-  if (v2raw) return promote(weekId, repairLog(getPlan(weekId), normalize(JSON.parse(v2raw))), V2)
+  if (v2raw) return promote(weekId, repairLog(plan, scopeLog(plan, normalize(JSON.parse(v2raw)))), V2)
   return null
 }
 

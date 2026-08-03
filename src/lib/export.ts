@@ -2,6 +2,7 @@ import type { Block, DayName, Exercise, ExerciseLog, MeasureType, SetLog, WeekLo
 import { DAY_NAMES, blocksForDay, findBlock } from './plans'
 import { catalogueEntry, resolveMeasure } from '../catalogue'
 import { addedToExercise } from './added'
+import { exerciseKey } from './logKeys'
 import { effectiveSets, epley, formatSet, isExerciseDone } from './sets'
 
 // Builds the "Copy week summary" text — the contract with the planning chat.
@@ -247,16 +248,18 @@ const blockOnlyRow = (ctx: Context): Row => ({
 
 function wendlerLine(plan: WeekPlan, log: WeekLog): string | null {
   if (!plan.wendler) return null
+  // Kept as (block, exercise) pairs: the log key is block-scoped, and a main
+  // lift programmed in two blocks is two slots to complete, not one.
   const exercises = plan.days
     .flatMap((d) => d.blocks)
     .filter((b) => b.wendler)
-    .flatMap((b) => b.exercises)
+    .flatMap((b) => b.exercises.map((ex) => ({ block: b, ex })))
   const label = `C${plan.wendler.cycle}W${plan.wendler.week}`
   if (exercises.length === 0) return `wendler=${label}`
   // A swapped slot means the programmed lift was NOT done — it must not count
   // toward Wendler completion.
-  const done = exercises.filter((ex) => {
-    const entry = log.exercises[ex.id]
+  const done = exercises.filter(({ block, ex }) => {
+    const entry = log.exercises[exerciseKey(block.id, ex.id)]
     return !entry?.swap && isExerciseDone(ex, entry)
   }).length
   const state = done === exercises.length ? 'complete' : done > 0 ? 'in_progress' : 'not_started'
@@ -320,8 +323,10 @@ export function buildExport(plan: WeekPlan, log: WeekLog): string {
         rows.push(blockOnlyRow(ctx))
         continue
       }
-      for (const ex of placed.block.exercises) rows.push(...exerciseRows(ctx, ex, log.exercises[ex.id], false))
-      for (const a of added) rows.push(...exerciseRows(ctx, addedToExercise(a), log.exercises[a.id], true))
+      for (const ex of placed.block.exercises)
+        rows.push(...exerciseRows(ctx, ex, log.exercises[exerciseKey(placed.block.id, ex.id)], false))
+      for (const a of added)
+        rows.push(...exerciseRows(ctx, addedToExercise(a), log.exercises[exerciseKey(placed.block.id, a.id)], true))
     }
   }
 
@@ -350,14 +355,18 @@ export function buildExport(plan: WeekPlan, log: WeekLog): string {
   // cannot show up here as a phantom. An exercise inside an already-skipped
   // block is left out: its block going is the fact, and listing it twice would
   // read as two separate decisions.
+  // Deduped by block+exercise, not exercise alone: a movement skipped in one
+  // block and done in another is one skip to report, and reporting it once
+  // per id would hide the second occurrence entirely.
   const skippedBlocks = new Set(log.deferred.map((d) => d.blockId))
   const seen = new Set<string>()
   const skippedExercises: string[] = []
   for (const r of rows) {
     const id = String(r.exercise_id ?? '')
-    if (!id || seen.has(id) || skippedBlocks.has(String(r.block_id)) || !log.exercises[id]?.skipped) continue
-    seen.add(id)
-    skippedExercises.push(`${id} (${r.day}) "${cell(log.exercises[id].skipReason) || 'no reason given'}"`)
+    const key = exerciseKey(String(r.block_id ?? ''), id)
+    if (!id || seen.has(key) || skippedBlocks.has(String(r.block_id)) || !log.exercises[key]?.skipped) continue
+    seen.add(key)
+    skippedExercises.push(`${id} (${r.day}) "${cell(log.exercises[key].skipReason) || 'no reason given'}"`)
   }
   head.push(`skipped_exercises=${skippedExercises.length > 0 ? skippedExercises.join('; ') : 'none'}`)
 

@@ -25,12 +25,11 @@
 // to the catalogue (toes-to-bar was already there). easy-run runs BOTH Mon and
 // Tue under the SAME id, separated only by block id (mon-run / tue-long-run) —
 // deliberately NOT the wk29-wk31 "-2" suffix, which split the history.
-// CAVEAT, unresolved in the app as of this week: WeekLog.exercises is a flat
-// Record<exerciseId, ExerciseLog> (src/types.ts) and BlockCard reads
-// log.exercises[ex.id] with no block scoping (src/components/BlockCard.tsx:488),
-// so Mon and Tue share one easy-run entry — logging Monday's run pre-fills and
-// marks Tuesday's. Block-scoped log keys are the fix; until then this is a
-// known, accepted collision, not an oversight.
+// That now works as written: log entries are keyed by blockId::exerciseId
+// (src/lib/logKeys.ts), so the two runs log independently under one id. This
+// week shipped one day ahead of that change, so a log written on 3 Aug before
+// it landed has a single shared easy-run entry; scopeLog() puts that entry on
+// Monday and leaves Tuesday empty on first read.
 export default {
   weekId: '2026-wk32',
   label: '3 August - 9 August',

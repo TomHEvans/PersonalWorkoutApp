@@ -1,4 +1,5 @@
 import type { ExerciseLog, PlanSet, SetLog, WeekLog, WeekPlan } from '../types'
+import { exerciseKey } from './logKeys'
 
 // Repairs week logs written while the set rows pre-loaded the plan's
 // programmed values as input VALUES (athx-log-v2, and the unversioned KV
@@ -65,9 +66,10 @@ export function repairLog(plan: WeekPlan, log: WeekLog): WeekLog {
   for (const day of plan.days) {
     for (const block of day.blocks) {
       for (const ex of block.exercises) {
-        const entry = exercises[ex.id]
+        const key = exerciseKey(block.id, ex.id)
+        const entry = exercises[key]
         if (!ex.sets || !entry?.sets) continue
-        exercises[ex.id] = { ...entry, sets: repairSets(entry.sets, ex.sets) }
+        exercises[key] = { ...entry, sets: repairSets(entry.sets, ex.sets) }
       }
     }
   }

@@ -113,6 +113,11 @@ export interface Deferral {
 }
 
 export interface WeekLog {
+  // Keyed by exerciseKey(blockId, exerciseId) — "mon-run::easy-run" — NOT by
+  // exercise id alone. See src/lib/logKeys.ts: the block is part of the key so
+  // a movement programmed twice in one week keeps one id and still logs
+  // independently on each day. Records written before this are rekeyed by
+  // scopeLog() on read.
   exercises: Record<string, ExerciseLog>
   sessionNotes: Partial<Record<DayName, string>>
   deferred: Deferral[] // "skipped" in the UI; field name kept for data compat
