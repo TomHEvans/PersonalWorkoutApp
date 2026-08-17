@@ -14,17 +14,21 @@
 // double figures on the lower body top sets: that is Tom's rep profile, not a
 // miscalibrated TM.
 //
-// Running per 09 Running Plan: two runs, Tue 45 min and Sat 35-40 min, both zone
-// 2 to 3 on the Garmin. The Tuesday long run STAYS AT 45 MINUTES for the third
-// week, because run progression counts weeks actually run.
+// Running per 09 Running Plan: two runs, Mon 45 min and Sat 35-40 min, both zone
+// 2 to 3 on the Garmin. The long run STAYS AT 45 MINUTES for the third week,
+// because run progression counts weeks actually run.
 //
-// Physio placement: shoulder programme as Monday's press warm-up, crab walks as
+// Physio placement: shoulder programme as Tuesday's press warm-up, crab walks as
 // Wednesday's squat warm-up, knee block once on Tuesday. The knee block has now
 // been missed THREE weeks running, 31, 32 and 33.
 //
-// Monday is press only. Tom cannot double up on a Monday, it is always a heavy
-// meetings day, so the 35-40 min run sits on Saturday. Sunday is the only rest
-// day.
+// MONDAY AND TUESDAY SWAPPED, 17 Aug 2026, at Tom's request: he runs Monday and
+// lifts Tuesday. Monday is the 45 min long run and NOTHING ELSE, a single
+// session, because Monday is always a heavy meetings day and he cannot double
+// up on it. The press day moved wholesale to Tuesday, shoulder physio warm-up
+// included, and the knee block stays on Tuesday rather than following the run,
+// which is what keeps Monday to one session. Tuesday is therefore the long day
+// of the week. The 35-40 min run stays on Saturday. Sunday is the only rest day.
 //
 // Authored on its own Monday: the Sunday kickoff was answered on the morning of
 // Mon 17 Aug. Monday is authored as planned regardless; whether it ran is logged
@@ -46,12 +50,37 @@ export default {
   label: '17 August - 23 August',
   wendler: { cycle: 2, week: 2 },
   stages:
-    'C2W2 3s week REPEATED A THIRD TIME (wk32 and wk33 both untrained) | TMs held 63/126/171 | AMRAPs uncapped, 1-2 reps in reserve | Mon press + shoulder physio, no run (heavy meetings day) | Tue run 45 min + full knee block | Wed squat + crab walks | Thu deadlift, hook grip from the warm-ups | Fri ATHX endurance sim (STILL no baseline, 5th attempt) + metcon | Sat run 35-40 min | Sun rest',
+    'C2W2 3s week REPEATED A THIRD TIME (wk32 and wk33 both untrained) | TMs held 63/126/171 | AMRAPs uncapped, 1-2 reps in reserve | Mon run 45 min ONLY, single session (heavy meetings day) | Tue press + shoulder physio + full knee block, the long day | Wed squat + crab walks | Thu deadlift, hook grip from the warm-ups | Fri ATHX endurance sim (STILL no baseline, 5th attempt) + metcon | Sat run 35-40 min | Sun rest',
   notes:
-    'Weeks 32 and 33 were both untrained: Tom confirmed 17 Aug 2026. The plan is shifted for a second time, not skipped, so the 5/3/1 cycle repeats C2W2 at identical numbers for a third scheduling and the Tuesday long run stays at 45 minutes. TMs held at 63/126/171 by decision on 2 Aug 2026. 3+ means AMRAP with 1 to 2 reps in reserve and no rep cap; double figures on squat and deadlift top sets are expected. Friday priority order is endurance simulation first, metcon second: cut the metcon if time is short, the baseline is the point and after four attempts it still does not exist. Runs are Garmin zone 2 to 3 by time, not distance. Monday is press only.',
+    'Weeks 32 and 33 were both untrained: Tom confirmed 17 Aug 2026. The plan is shifted for a second time, not skipped, so the 5/3/1 cycle repeats C2W2 at identical numbers for a third scheduling and the long run stays at 45 minutes. TMs held at 63/126/171 by decision on 2 Aug 2026. 3+ means AMRAP with 1 to 2 reps in reserve and no rep cap; double figures on squat and deadlift top sets are expected. Friday priority order is endurance simulation first, metcon second: cut the metcon if time is short, the baseline is the point and after four attempts it still does not exist. Runs are Garmin zone 2 to 3 by time, not distance. Monday and Tuesday were swapped on 17 Aug 2026 as Tom requested: Monday is the 45 minute long run and nothing else, a single session on a heavy meetings day, and Tuesday carries the whole press day plus the knee block.',
   days: [
     {
       day: 'Mon',
+      blocks: [
+        {
+          // Renamed from tue-long-run when the long run moved to Monday. The
+          // block id names its day, as sat-run does, so leaving it as
+          // "tue-long-run" on a Monday would mislabel every logged row.
+          id: 'mon-long-run',
+          title: 'Long easy run',
+          short: 'Long run',
+          priority: 3,
+          exercises: [
+            {
+              // Same id as Saturday's run, separated by block id only. Log
+              // entries are keyed blockId::exerciseId (src/lib/logKeys.ts), so
+              // the two days log independently under the one id.
+              id: 'easy-run',
+              name: 'Easy run',
+              rx: '45 minutes, heart rate zone 2 to 3',
+              measure: 'freeText',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      day: 'Tue',
       blocks: [
         {
           id: 'shoulder-physio',
@@ -140,28 +169,6 @@ export default {
                 { w: 40.5, r: 12 },
                 { w: 40.5, r: 12 },
               ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      day: 'Tue',
-      blocks: [
-        {
-          id: 'tue-long-run',
-          title: 'Long easy run',
-          short: 'Long run',
-          priority: 3,
-          exercises: [
-            {
-              // Same id as Saturday's run, separated by block id only. Log
-              // entries are keyed blockId::exerciseId (src/lib/logKeys.ts), so
-              // the two days log independently under the one id.
-              id: 'easy-run',
-              name: 'Easy run',
-              rx: '45 minutes, heart rate zone 2 to 3',
-              measure: 'freeText',
             },
           ],
         },
