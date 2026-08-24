@@ -41,11 +41,24 @@
 // before the session carrying overhead work (Wed, the wall walks). Crab walks
 // before any session containing squatting (Tue). Knee block once, on the day
 // most likely to survive contact, which is Monday.
-// KNEE BLOCK IS NOW EIGHT EXERCISES: TRX squat and rope skipping were removed by
-// Tom on 21 Aug 2026. START AT THE LOADED HALF this week (hip extension through
-// knee extension) and do the jumps after: on 21 Aug the jump section ran and the
-// loaded section was lost to time, so rotating the entry point stops the same
-// half being cut every week.
+// KNEE BLOCK IS NOW FOUR EXERCISES, PLYOMETRICS AND LANDING ONLY. Tom removed ALL
+// LOADED KNEE REHAB on 24 Aug 2026: single leg barbell hip extension, Copenhagen
+// hip adduction, leg press and single leg knee extension are all out. He is no
+// longer under physio review, so the prescription is his. Down from eight, and
+// from eleven originally. Rationale: heavy slow resistance for the knee has
+// relocated into the classes rather than being deleted, since a 60 kg leg press
+// is trivial beside back squats at 112.5x9, which is the same reasoning that
+// removed the TRX squat on 21 Aug. The block is now roughly 10 minutes rather
+// than 20 to 25, and it has been missed in four of the last five weeks, so a
+// shorter block is materially more likely to happen.
+// TWO GAPS TO WATCH, flagged to Tom and not acted on without him: single leg
+// knee extension was the ONLY single leg quad work in the week, and bilateral
+// squatting masks a side to side deficit rather than exposing it; Copenhagen was
+// the only adductor work, and adductor strength controls the knee valgus that
+// the retained drop jumps demand. If knee symptoms return under loaded squatting
+// that is the signal to rebuild the loading base, not to reduce the jumps.
+// Lateral step down heel tap is RETAINED: it is bodyweight rather than loaded,
+// and 04 groups it with the jump and landing section.
 //
 // RUNNING per 09 Running Plan, whose placement logic was withdrawn on 23 Aug and
 // replaced with "both runs are bolt-ons attached to class days". Neither run
@@ -76,23 +89,19 @@ export default {
   label: '24 August - 30 August',
   wendler: { cycle: 2, week: 2 },
   stages:
-    'CLASS-LED WEEK, new structure from 23 Aug 2026 | Mon-Wed only, 3 classes, the floor of the 3-5 rule | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block (start loaded half) + CrossFit + pulldown | Tue crab walks + class squat block as programmed | Wed shoulder physio + deadlift bolt-on + CrossFit | Thu long run 50 min, FIRST progression step | Sat run 35-40 min | Fri and Sun rest',
+    'CLASS-LED WEEK, new structure from 23 Aug 2026 | Mon-Wed only, 3 classes, the floor of the 3-5 rule | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block, PLYOS ONLY, all loaded rehab removed 24 Aug + CrossFit + pulldown | Tue crab walks + class squat block as programmed | Wed shoulder physio + deadlift bolt-on + CrossFit | Thu long run 50 min, FIRST progression step | Sat run 35-40 min | Fri and Sun rest',
   notes:
-    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. Availability is Monday to Wednesday only, so this is a 3 class week, exactly on the floor. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD: Monday wrecks grip with toes-to-bar and Tuesday is squats. Tuesday takes the class back squat block as programmed with no 5/3/1 squat added, because C2W2 squat was completed on 21 August at 112.5x9. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is re-anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen. Start the knee block at the loaded half this week. Runs are bolt-ons that need no gym, so they sit outside the Mon-Wed window; the long run takes its first ever progression step to 50 minutes. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
+    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. Availability is Monday to Wednesday only, so this is a 3 class week, exactly on the floor. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD: Monday wrecks grip with toes-to-bar and Tuesday is squats. Tuesday takes the class back squat block as programmed with no 5/3/1 squat added, because C2W2 squat was completed on 21 August at 112.5x9. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is re-anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen. ALL LOADED KNEE REHAB WAS REMOVED BY TOM ON 24 AUGUST 2026: the block is now the four plyometric and landing drills only, roughly 10 minutes, and the loaded work has relocated into the class squatting. Runs are bolt-ons that need no gym, so they sit outside the Mon-Wed window; the long run takes its first ever progression step to 50 minutes. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
   days: [
     {
       day: 'Mon',
       blocks: [
         {
           id: 'knee-physio',
-          title: 'Knee physio (once weekly, loaded half first)',
+          title: 'Knee physio (once weekly, plyometrics and landing only)',
           short: 'Knee physio',
           priority: 1,
           exercises: [
-            { id: 'hip-thrust', name: 'Single-leg barbell hip extension', rx: '3x8, load as appropriate. START HERE this week', measure: 'weightReps' },
-            { id: 'copenhagen', name: 'Copenhagen hip adduction', rx: '3x5 with a 5 second hold', measure: 'reps' },
-            { id: 'leg-press', name: 'Leg press', rx: '3x12 at 60 kg', measure: 'weightReps' },
-            { id: 'knee-ext', name: 'Knee extension single leg', rx: '3x8 at 14 kg, 90 to 40 degrees only', measure: 'weightReps' },
             { id: 'dj-two-foot', name: 'Drop jump two-foot land', rx: '2x6', measure: 'reps' },
             { id: 'dj-single', name: 'Drop jump single-leg land and hold', rx: '3x3', measure: 'reps' },
             { id: 'line-jumps', name: 'Forward line jumps', rx: '2x10', measure: 'reps' },
