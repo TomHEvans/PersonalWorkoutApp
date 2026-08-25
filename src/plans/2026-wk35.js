@@ -6,16 +6,22 @@
 // this BREAKS THE 3 CLASS FLOOR he set on 23 August and that the reason is a very
 // short week. Recorded as a DELIBERATE ONE WEEK EXCEPTION with a stated reason,
 // not as the rule failing. The floor stands from week 36.
-// WHAT CHANGED: Tuesday 25 August is removed entirely, taking the class back
-// squat block, the class WOD 'Hulk' and the banded crab walks with it. The
-// Saturday 35 to 40 minute run is removed. Everything else is untouched.
-// WHY THE SATURDAY RUN RATHER THAN THE THURSDAY ONE: 09 Running Plan's cut order
-// says the shorter run is cut first and the long run second. The Thursday 50
-// minute run also carries the first progression step the plan has ever taken, so
-// it is the one worth keeping.
+// WHAT CHANGED: the class back squat block, the class WOD 'Hulk' and the banded
+// crab walks are all removed. The 35 to 40 minute shorter run is removed.
+// SECOND REVISION, same evening: THURSDAY TO SUNDAY NOW CARRY NOTHING AT ALL,
+// because the training week is Monday to Wednesday and nothing should sit outside
+// it. The surviving 50 minute long run MOVED FROM THURSDAY TO TUESDAY rather than
+// being dropped, because Tom asked for one run in the same breath as cutting the
+// squat session, and Tuesday is the only slot left inside the window: Monday has
+// already gone and Wednesday carries the deadlift plus a class.
+// WHY THE LONG RUN SURVIVED AND THE SHORTER ONE DID NOT: 09 Running Plan's cut
+// order says the shorter run is cut first and the long run second. The long run
+// also carries the first progression step the plan has ever taken.
+// RUNNING THE DAY BEFORE THE DEADLIFT IS ACCEPTABLE HERE because the run is zone
+// 2 to 3 and easy by definition. If it ever stops being easy this stops holding.
 // CRAB WALKS DO NOT RUN THIS WEEK, and that is correct rather than an oversight:
-// they are anchored to any session containing squatting, and with Tuesday gone
-// there is no squatting anywhere in the week.
+// they are anchored to any session containing squatting, and with the squat
+// session gone there is no squatting anywhere in the week.
 // ONE HONEST CONSEQUENCE WORTH NOTICING. The loaded knee rehab was removed
 // earlier the same day on the argument that heavy slow resistance had relocated
 // into the class squatting. With the squat session now also gone, THIS WEEK
@@ -35,9 +41,9 @@
 // the class version. Only a lift that appears nowhere in the week's classes
 // becomes a bolt-on. So Wendler stops competing with the classes for time.
 //
-// THIS WEEK IS MONDAY AND WEDNESDAY ONLY after the 24 Aug revision. Two gym days,
-// one under the 3-class floor, by Tom's explicit decision. Class timetable for
-// the week, from Tom's screenshots:
+// THIS WEEK IS MONDAY TO WEDNESDAY ONLY, and Thu to Sun carry nothing at all.
+// TWO classes, one under the 3-class floor, by Tom's explicit decision, plus one
+// run on Tuesday. Class timetable for the week, from Tom's screenshots:
 //   Mon 24  CrossFit  WOD 'Vision' (toes-to-bar + row/ski) + successories
 //   Tue 25  CrossFit  STRENGTH back squat + WOD 'Hulk'                  REMOVED 24 Aug
 //   Wed 26  CrossFit  WOD 'Black Widow' (partner: run, box jump over, wall walk)
@@ -83,12 +89,14 @@
 //
 // RUNNING per 09 Running Plan, whose placement logic was withdrawn on 23 Aug and
 // replaced with "runs are bolt-ons attached to class days". CUT TO ONE RUN on 24
-// Aug at Tom's request: the Thursday long run survives and the Saturday 35 to 40
-// minute run is removed, per the cut order in 09, which drops the shorter run
-// first. It needs no gym, so it sits outside the Mon-Wed window deliberately.
+// Aug at Tom's request, and that run now sits on TUESDAY, inside the Mon to Wed
+// window. The 35 to 40 minute shorter run is gone, per the cut order in 09.
 // THE LONG RUN STEPS 45 -> 50 MINUTES, the first progression it has ever taken,
 // because week 34's Monday run was actually completed and progression counts
 // weeks run rather than calendar weeks. Zone 2 to 3 on the Garmin, by time.
+// NOTE FOR FUTURE WEEKS: 09 still assumes runs can sit on the weekend as a
+// fallback. Tom's instruction on 24 Aug was that NOTHING sits outside his stated
+// training window. If that holds beyond this week, 09 needs updating again.
 //
 // DELIBERATELY LEFT OUT, not dropped: the rings feet-assisted muscle up
 // transition drill. Monday already carries 55 toes-to-bar plus ring rows and
@@ -106,7 +114,7 @@
 // long run once Tom's availability allows.
 //
 // Contingency: cut from the bottom. The straight arm pulldown goes first, then
-// the Thursday run. NEVER cut the knee block, the shoulder physio or the
+// the Tuesday run. NEVER cut the knee block, the shoulder physio or the
 // deadlift: the deadlift is the last outstanding lift of cycle 2 and there is no
 // slack left in the week to move it into.
 export default {
@@ -114,9 +122,9 @@ export default {
   label: '24 August - 30 August',
   wendler: { cycle: 2, week: 2 },
   stages:
-    'CLASS-LED WEEK, new structure from 23 Aug 2026 | REVISED 24 Aug: Mon and Wed only, 2 classes, one UNDER the floor by Tom decision, very short week | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block, PLYOS ONLY, all loaded rehab removed 24 Aug + CrossFit + pulldown | Tue REST, squat session removed | Wed shoulder physio + deadlift bolt-on + CrossFit | Thu long run 50 min, the ONLY run this week, FIRST progression step | Fri, Sat and Sun rest, Saturday run removed',
+    'CLASS-LED WEEK, new structure from 23 Aug 2026 | REVISED 24 Aug: Mon and Wed only, 2 classes, one UNDER the floor by Tom decision, very short week | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block, PLYOS ONLY, all loaded rehab removed 24 Aug + CrossFit + pulldown | Tue squat session removed, run moved here instead | Wed shoulder physio + deadlift bolt-on + CrossFit | Tue run 50 min, the ONLY run, FIRST progression step, moved off Thu | Thu to Sun carry NOTHING, week is Mon to Wed',
   notes:
-    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. REVISED on the evening of 24 August at his request: the squat session is removed, only the deadlift remains, and the week drops to a single run. That leaves TWO classes, one under the 3 class floor. He flagged the breach himself and gave the reason, a very short week, so this is a deliberate one week exception rather than the rule failing, and the floor stands from week 36. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD, Monday being ruled out because toes-to-bar wrecks the grip. Tuesday is removed entirely, taking the class squat block, the class WOD and the banded crab walks with it. The crab walks correctly do not run this week because they are anchored to any session containing squatting and there is now none. WORTH NOTICING: the loaded knee rehab was removed earlier the same day on the argument that heavy slow resistance had relocated into the class squatting, and with the squat session now also gone this week contains no loaded knee work from either source. That is fine for one short week and should not become a pattern. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen, now four plyometric and landing drills only. Cut to ONE run, the Thursday 50 minute long run, which takes the first progression step the plan has ever made. The Saturday run goes first per the cut order in 09 Running Plan, which drops the shorter run before the long one. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
+    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. REVISED on the evening of 24 August at his request: the squat session is removed, only the deadlift remains, and the week drops to a single run. That leaves TWO classes, one under the 3 class floor. He flagged the breach himself and gave the reason, a very short week, so this is a deliberate one week exception rather than the rule failing, and the floor stands from week 36. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD, Monday being ruled out because toes-to-bar wrecks the grip. Tuesday is removed entirely, taking the class squat block, the class WOD and the banded crab walks with it. The crab walks correctly do not run this week because they are anchored to any session containing squatting and there is now none. WORTH NOTICING: the loaded knee rehab was removed earlier the same day on the argument that heavy slow resistance had relocated into the class squatting, and with the squat session now also gone this week contains no loaded knee work from either source. That is fine for one short week and should not become a pattern. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen, now four plyometric and landing drills only. Cut to ONE run, the 50 minute long run, which takes the first progression step the plan has ever made. The shorter run goes first per the cut order in 09 Running Plan. SECOND REVISION the same evening: Thursday to Sunday now carry nothing at all, because the training week is Monday to Wednesday and nothing should sit outside it, so the run moved from Thursday to Tuesday rather than being dropped. Tuesday is the only slot left: Monday has gone and Wednesday carries the deadlift plus a class. Running easy the day before a deadlift is fine while the run stays zone 2 to 3. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
   days: [
     {
       day: 'Mon',
@@ -156,7 +164,17 @@ export default {
     },
     {
       day: 'Tue',
-      blocks: [{ id: 'rest-tue', title: 'Rest', short: 'Rest', priority: 3, exercises: [] }],
+      blocks: [
+        {
+          id: 'tue-long-run',
+          title: 'Long easy run',
+          short: 'Long run',
+          priority: 3,
+          exercises: [
+            { id: 'easy-run', name: 'Easy run', rx: '50 minutes, heart rate zone 2 to 3. The only run this week. FIRST progression step the run plan has taken: 45 to 50, because the wk34 Monday run was completed. Moved from Thursday on 24 Aug so nothing sits outside the Mon to Wed window. Keep it genuinely easy: the deadlift is tomorrow', measure: 'freeText' },
+          ],
+        },
+      ],
     },
     {
       day: 'Wed',
@@ -194,17 +212,7 @@ export default {
     },
     {
       day: 'Thu',
-      blocks: [
-        {
-          id: 'thu-long-run',
-          title: 'Long easy run',
-          short: 'Long run',
-          priority: 3,
-          exercises: [
-            { id: 'easy-run', name: 'Easy run', rx: '50 minutes, heart rate zone 2 to 3. FIRST progression step the run plan has taken: 45 to 50, because wk34 Monday run was completed. No gym needed, which is why it sits outside the Mon-Wed window', measure: 'freeText' },
-          ],
-        },
-      ],
+      blocks: [{ id: 'rest-thu', title: 'Rest', short: 'Rest', priority: 3, exercises: [] }],
     },
     {
       day: 'Fri',
