@@ -1,5 +1,28 @@
 // Week 35: 24 August - 30 August 2026.
 //
+// REVISED 24 AUGUST 2026, EVENING, AT TOM'S REQUEST. THE SQUAT SESSION IS OUT AND
+// THE WEEK DROPS TO TWO CLASSES AND ONE RUN. Tom asked to remove the squat
+// session, keep only the deadlift, and cut to a single run, noting himself that
+// this BREAKS THE 3 CLASS FLOOR he set on 23 August and that the reason is a very
+// short week. Recorded as a DELIBERATE ONE WEEK EXCEPTION with a stated reason,
+// not as the rule failing. The floor stands from week 36.
+// WHAT CHANGED: Tuesday 25 August is removed entirely, taking the class back
+// squat block, the class WOD 'Hulk' and the banded crab walks with it. The
+// Saturday 35 to 40 minute run is removed. Everything else is untouched.
+// WHY THE SATURDAY RUN RATHER THAN THE THURSDAY ONE: 09 Running Plan's cut order
+// says the shorter run is cut first and the long run second. The Thursday 50
+// minute run also carries the first progression step the plan has ever taken, so
+// it is the one worth keeping.
+// CRAB WALKS DO NOT RUN THIS WEEK, and that is correct rather than an oversight:
+// they are anchored to any session containing squatting, and with Tuesday gone
+// there is no squatting anywhere in the week.
+// ONE HONEST CONSEQUENCE WORTH NOTICING. The loaded knee rehab was removed
+// earlier the same day on the argument that heavy slow resistance had relocated
+// into the class squatting. With the squat session now also gone, THIS WEEK
+// CONTAINS NO LOADED KNEE WORK AT ALL, from either source. Fine for one short
+// week. If it repeats, the relocation argument needs re-examining rather than
+// being assumed to still hold.
+//
 // THE SHAPE OF THE WEEK CHANGED ON 23 AUG 2026, AT TOM'S OWN INSTRUCTION.
 // CLASSES ARE NOW THE SPINE and Wendler and rehab hang off them as accessories.
 // At least 3 classes per week, ideally 5; up to 2 may be dropped to manage load
@@ -12,10 +35,11 @@
 // the class version. Only a lift that appears nowhere in the week's classes
 // becomes a bolt-on. So Wendler stops competing with the classes for time.
 //
-// THIS WEEK IS MONDAY TO WEDNESDAY ONLY. Three gym days, which lands exactly on
-// the 3-class floor. Class timetable for the week, from Tom's screenshots:
+// THIS WEEK IS MONDAY AND WEDNESDAY ONLY after the 24 Aug revision. Two gym days,
+// one under the 3-class floor, by Tom's explicit decision. Class timetable for
+// the week, from Tom's screenshots:
 //   Mon 24  CrossFit  WOD 'Vision' (toes-to-bar + row/ski) + successories
-//   Tue 25  CrossFit  STRENGTH back squat + WOD 'Hulk' (burpees + front squats)
+//   Tue 25  CrossFit  STRENGTH back squat + WOD 'Hulk'                  REMOVED 24 Aug
 //   Wed 26  CrossFit  WOD 'Black Widow' (partner: run, box jump over, wall walk)
 //   Thu 27  Hyrox     'Quicksilver' (6x5min run/bike + AMRAP station)  NOT ATTENDING
 //   Fri 28  CrossFit  STRENGTH strict press + WOD 'Juggernaut'         NOT ATTENDING
@@ -30,17 +54,14 @@
 //
 // NO CLASS MON TO WED CONTAINS A DEADLIFT, so it has no block to substitute
 // into and is bolted onto Wednesday. Wednesday is the only viable day: Monday
-// destroys grip with toes-to-bar, Tuesday is squats. Lift BEFORE the class.
-//
-// TUESDAY TAKES THE CLASS SQUAT BLOCK AS PROGRAMMED, with no 5/3/1 squat on top,
-// because the C2W2 squat was already completed on 21 August. Keep the class
-// triples under 112.5 kg.
+// destroys grip with toes-to-bar. Lift BEFORE the class.
 //
 // PHYSIO, RE-ANCHORED TO MOVEMENT RATHER THAN TO A FIXED LIFT DAY, because under
 // a class-led week there are no fixed lift days any more. Shoulder programme
 // before the session carrying overhead work (Wed, the wall walks). Crab walks
-// before any session containing squatting (Tue). Knee block once, on the day
-// most likely to survive contact, which is Monday.
+// before any session containing squatting, of which there are none this week
+// after the revision. Knee block once, on the day most likely to survive
+// contact, which is Monday.
 // KNEE BLOCK IS NOW FOUR EXERCISES, PLYOMETRICS AND LANDING ONLY. Tom removed ALL
 // LOADED KNEE REHAB on 24 Aug 2026: single leg barbell hip extension, Copenhagen
 // hip adduction, leg press and single leg knee extension are all out. He is no
@@ -61,11 +82,13 @@
 // and 04 groups it with the jump and landing section.
 //
 // RUNNING per 09 Running Plan, whose placement logic was withdrawn on 23 Aug and
-// replaced with "both runs are bolt-ons attached to class days". Neither run
-// needs a gym, so they sit OUTSIDE the Mon-Wed window deliberately. THE LONG RUN
-// STEPS 45 -> 50 MINUTES, the first progression it has ever taken, because week
-// 34's Monday run was actually completed and progression counts weeks run rather
-// than calendar weeks. Both zone 2 to 3 on the Garmin, by time not distance.
+// replaced with "runs are bolt-ons attached to class days". CUT TO ONE RUN on 24
+// Aug at Tom's request: the Thursday long run survives and the Saturday 35 to 40
+// minute run is removed, per the cut order in 09, which drops the shorter run
+// first. It needs no gym, so it sits outside the Mon-Wed window deliberately.
+// THE LONG RUN STEPS 45 -> 50 MINUTES, the first progression it has ever taken,
+// because week 34's Monday run was actually completed and progression counts
+// weeks run rather than calendar weeks. Zone 2 to 3 on the Garmin, by time.
 //
 // DELIBERATELY LEFT OUT, not dropped: the rings feet-assisted muscle up
 // transition drill. Monday already carries 55 toes-to-bar plus ring rows and
@@ -82,16 +105,18 @@
 // times. As a class it would actually happen. Prioritise it over the standalone
 // long run once Tom's availability allows.
 //
-// Contingency: cut from the bottom. Saturday run first, straight arm pulldown
-// second. Never cut the rehab warm-ups, the knee block, or the deadlift.
+// Contingency: cut from the bottom. The straight arm pulldown goes first, then
+// the Thursday run. NEVER cut the knee block, the shoulder physio or the
+// deadlift: the deadlift is the last outstanding lift of cycle 2 and there is no
+// slack left in the week to move it into.
 export default {
   weekId: '2026-wk35',
   label: '24 August - 30 August',
   wendler: { cycle: 2, week: 2 },
   stages:
-    'CLASS-LED WEEK, new structure from 23 Aug 2026 | Mon-Wed only, 3 classes, the floor of the 3-5 rule | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block, PLYOS ONLY, all loaded rehab removed 24 Aug + CrossFit + pulldown | Tue crab walks + class squat block as programmed | Wed shoulder physio + deadlift bolt-on + CrossFit | Thu long run 50 min, FIRST progression step | Sat run 35-40 min | Fri and Sun rest',
+    'CLASS-LED WEEK, new structure from 23 Aug 2026 | REVISED 24 Aug: Mon and Wed only, 2 classes, one UNDER the floor by Tom decision, very short week | Wendler substitutes into class strength blocks, bolts on only where absent | C2W2 DEADLIFT ONLY, the last lift of cycle 2; fresh cycle starts wk36, TM level still undecided | TMs unchanged 63/126/171 | Mon knee block, PLYOS ONLY, all loaded rehab removed 24 Aug + CrossFit + pulldown | Tue REST, squat session removed | Wed shoulder physio + deadlift bolt-on + CrossFit | Thu long run 50 min, the ONLY run this week, FIRST progression step | Fri, Sat and Sun rest, Saturday run removed',
   notes:
-    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. Availability is Monday to Wednesday only, so this is a 3 class week, exactly on the floor. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD: Monday wrecks grip with toes-to-bar and Tuesday is squats. Tuesday takes the class back squat block as programmed with no 5/3/1 squat added, because C2W2 squat was completed on 21 August at 112.5x9. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is re-anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen. ALL LOADED KNEE REHAB WAS REMOVED BY TOM ON 24 AUGUST 2026: the block is now the four plyometric and landing drills only, roughly 10 minutes, and the loaded work has relocated into the class squatting. Runs are bolt-ons that need no gym, so they sit outside the Mon-Wed window; the long run takes its first ever progression step to 50 minutes. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
+    'First week of the class-led structure Tom set on 23 August 2026: classes are the spine, Wendler and rehab are accessories, 3 classes minimum and 5 ideal. REVISED on the evening of 24 August at his request: the squat session is removed, only the deadlift remains, and the week drops to a single run. That leaves TWO classes, one under the 3 class floor. He flagged the breach himself and gave the reason, a very short week, so this is a deliberate one week exception rather than the rule failing, and the floor stands from week 36. The only Wendler work is the outstanding C2W2 deadlift, which no class this week contains, so it is bolted onto Wednesday before the WOD, Monday being ruled out because toes-to-bar wrecks the grip. Tuesday is removed entirely, taking the class squat block, the class WOD and the banded crab walks with it. The crab walks correctly do not run this week because they are anchored to any session containing squatting and there is now none. WORTH NOTICING: the loaded knee rehab was removed earlier the same day on the argument that heavy slow resistance had relocated into the class squatting, and with the squat session now also gone this week contains no loaded knee work from either source. That is fine for one short week and should not become a pattern. Cycle 2 week 3 is never run; a fresh cycle starts in week 36 and its training max level is not yet decided. Physio is anchored to movement rather than to fixed lift days: shoulder programme before overhead work, crab walks before squatting, knee block once on the day most likely to happen, now four plyometric and landing drills only. Cut to ONE run, the Thursday 50 minute long run, which takes the first progression step the plan has ever made. The Saturday run goes first per the cut order in 09 Running Plan, which drops the shorter run before the long one. Scale Monday toes-to-bar to 20-15-10-5-5: the movement has been performed exactly once.',
   days: [
     {
       day: 'Mon',
@@ -131,27 +156,7 @@ export default {
     },
     {
       day: 'Tue',
-      blocks: [
-        {
-          id: 'tue-warmup',
-          title: 'Warm-up - banded crab walks',
-          short: 'Crab walks',
-          priority: 1,
-          exercises: [
-            { id: 'crab-walk', name: 'Banded crab walks', rx: '3x12, warm-up. Standing rule: every session containing squatting', measure: 'reps', sets: [{ r: 12 }, { r: 12 }, { r: 12 }] },
-          ],
-        },
-        {
-          id: 'tue-class',
-          title: "CrossFit class - back squat + WOD 'Hulk'",
-          short: 'CrossFit',
-          priority: 1,
-          exercises: [
-            { id: 'class-strength', name: 'Back squat (class strength block)', rx: '3 back squats every 3 min x4. Take as programmed, NO 5/3/1 squat on top: C2W2 squat was completed 21 Aug at 112.5x9. Quality triples, keep them under 112.5 kg', measure: 'weightReps', sets: [{ r: 3 }, { r: 3 }, { r: 3 }, { r: 3 }] },
-            { id: 'class-wod', name: "WOD 'Hulk'", rx: '3 rounds of 2 min AMRAP then 2 min rest: 12-18 burpees over bar, then AMRAP front squats at 75 kg. Aim 45s of front squats, 8-10 reps. Log rounds and reps', measure: 'freeText' },
-          ],
-        },
-      ],
+      blocks: [{ id: 'rest-tue', title: 'Rest', short: 'Rest', priority: 3, exercises: [] }],
     },
     {
       day: 'Wed',
@@ -207,17 +212,7 @@ export default {
     },
     {
       day: 'Sat',
-      blocks: [
-        {
-          id: 'sat-run',
-          title: 'Easy run',
-          short: 'Easy run',
-          priority: 3,
-          exercises: [
-            { id: 'easy-run', name: 'Easy run', rx: '35 to 40 minutes, heart rate zone 2 to 3. No gym needed. Cut this first if the week compresses', measure: 'freeText' },
-          ],
-        },
-      ],
+      blocks: [{ id: 'rest-sat', title: 'Rest', short: 'Rest', priority: 3, exercises: [] }],
     },
     {
       day: 'Sun',
